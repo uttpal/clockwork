@@ -1,6 +1,7 @@
 package com.uttpal.schedular.model;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.ToString;
 
 /**
@@ -8,7 +9,8 @@ import lombok.ToString;
  */
 @ToString
 @AllArgsConstructor
-public class ScheduleExecution {
+@Getter
+public class PartitionOffset {
     private String partitionId;
     private long offsetTimestamp;
 }

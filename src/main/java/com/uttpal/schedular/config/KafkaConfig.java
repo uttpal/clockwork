@@ -1,6 +1,6 @@
 package com.uttpal.schedular.config;
 
-import com.uttpal.schedular.service.SchedulerPartitionService;
+import com.uttpal.schedular.service.KafkaRebalanceListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.kafka.ConcurrentKafkaListenerContainerFactoryConfigurer;
 import org.springframework.context.annotation.Bean;
@@ -10,7 +10,6 @@ import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.SeekToCurrentErrorHandler;
-import org.springframework.retry.annotation.EnableRetry;
 
 /**
  * @author Uttpal
@@ -18,7 +17,12 @@ import org.springframework.retry.annotation.EnableRetry;
 @EnableKafka
 public class KafkaConfig {
 
+    private KafkaRebalanceListener kafkaRebalanceListener;
 
+    @Autowired
+    public KafkaConfig(KafkaRebalanceListener kafkaRebalanceListener) {
+        this.kafkaRebalanceListener = kafkaRebalanceListener;
+    }
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory kafkaListenerContainerFactory(
@@ -29,9 +33,10 @@ public class KafkaConfig {
         configurer.configure(factory, kafkaConsumerFactory);
         factory.setErrorHandler(new SeekToCurrentErrorHandler(
                 new DeadLetterPublishingRecoverer(template), 3));
-        factory.getContainerProperties().setConsumerRebalanceListener(new Co);
+        factory.getContainerProperties().setConsumerRebalanceListener(kafkaRebalanceListener);
+        //TODO: enable concurrency
         factory.setConcurrency(1);
-        factory.getContainerProperties().getClientId();
+
         return factory;
     }
 }

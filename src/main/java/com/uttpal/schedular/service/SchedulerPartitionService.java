@@ -3,26 +3,25 @@ package com.uttpal.schedular.service;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Uttpal
  */
 @Service
 public class SchedulerPartitionService {
-    private List<String> consumerPartitionMap;
+    private List<String> consumerPartitionList;
 
     public SchedulerPartitionService() {
-        this.consumerPartitionMap = new ArrayList<>();
+        this.consumerPartitionList = new ArrayList<>();
     }
 
     public List<String> updatePartitions(List<String> partitions) {
+        consumerPartitionList = partitions;
         return partitions;
     }
 
-    public List<String> getConsumerPartitionMap() {
-        return consumerPartitionMap;
+    public List<String> getConsumerPartitionList() {
+        return consumerPartitionList;
     }
 }

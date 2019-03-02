@@ -1,14 +1,11 @@
 package com.uttpal.schedular.dao;
 
-import com.uttpal.schedular.model.Schedule;
-import com.uttpal.schedular.model.ScheduleExecution;
-
-import java.util.List;
+import com.uttpal.schedular.model.PartitionOffset;
 
 /**
  * @author Uttpal
  */
 public interface ScheduleExecutionDao {
-    long upsert(String partitionId, long offsetTimestamp);
-    long get(String partitionId);
+    PartitionOffset upsert(String partitionId, long updatedOffsetTimestamp, long currentOffsetTimestamp);
+    PartitionOffset get(String partitionId);
 }
