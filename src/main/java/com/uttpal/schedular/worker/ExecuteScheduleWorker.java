@@ -1,5 +1,6 @@
 package com.uttpal.schedular.worker;
 
+import com.uttpal.schedular.service.ScheduleService;
 import com.uttpal.schedular.service.SchedulerPartitionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -17,15 +18,17 @@ import java.util.List;
 public class ExecuteScheduleWorker {
 
     private SchedulerPartitionService schedulerPartitionService;
+    private ScheduleService scheduleService;
 
     @Autowired
-    public ExecuteScheduleWorker(SchedulerPartitionService schedulerPartitionService) {
+    public ExecuteScheduleWorker(SchedulerPartitionService schedulerPartitionService, ScheduleService scheduleService) {
         this.schedulerPartitionService = schedulerPartitionService;
+        this.scheduleService = scheduleService;
     }
 
-    @Scheduled(fixedRate = 100)
+    @Scheduled(fixedRate = 1000)
     public void executeSchedules() {
         List<String> partitions = schedulerPartitionService.getConsumerPartitionList();
-
+        scheduleService.executePartitions(partitions);
     }
 }

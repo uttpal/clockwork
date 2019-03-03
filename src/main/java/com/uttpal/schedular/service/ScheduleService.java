@@ -31,7 +31,7 @@ public class ScheduleService {
         this.kafkaProducerService = kafkaProducerService;
     }
 
-    public List<Schedule> executePartitions(List<String> partition) {
+    public void executePartitions(List<String> partition) {
         partition.stream()
                 .map(scheduleExecutionDao::get)
                 .map(partitionOffset -> {
@@ -39,8 +39,8 @@ public class ScheduleService {
                     return new PartitionScheduleMap(partitionOffset, schedules);
                 })
                 .map(this::executeSchedules)
-                .map(this::commitPartitionSchedule)
-                .collect(Collectors.toList());
+                .forEach(this::commitPartitionSchedule);
+
     }
 
     private PartitionScheduleMap executeSchedules(PartitionScheduleMap partitionScheduleMap) {
@@ -74,16 +74,16 @@ public class ScheduleService {
         PartitionOffset partitionOffset;
         List<Schedule> schedules;
 
-        public PartitionScheduleMap(PartitionOffset partitionOffset, List<Schedule> schedules) {
+        PartitionScheduleMap(PartitionOffset partitionOffset, List<Schedule> schedules) {
             this.partitionOffset = partitionOffset;
             this.schedules = schedules;
         }
 
-        public PartitionOffset getPartitionOffset() {
+        PartitionOffset getPartitionOffset() {
             return partitionOffset;
         }
 
-        public List<Schedule> getSchedules() {
+        List<Schedule> getSchedules() {
             return schedules;
         }
     }
