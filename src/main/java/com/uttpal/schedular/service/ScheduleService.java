@@ -2,10 +2,13 @@ package com.uttpal.schedular.service;
 
 import com.uttpal.schedular.dao.ScheduleDao;
 import com.uttpal.schedular.dao.ScheduleExecutionDao;
+import com.uttpal.schedular.exception.EntityAlreadyExists;
 import com.uttpal.schedular.model.Delivery;
 import com.uttpal.schedular.model.PartitionOffset;
 import com.uttpal.schedular.model.Schedule;
+import com.uttpal.schedular.utils.DateTimeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -23,12 +26,23 @@ public class ScheduleService {
     private ScheduleDao scheduleDao;
     private ScheduleExecutionDao scheduleExecutionDao;
     private KafkaProducerService kafkaProducerService;
+    private DateTimeUtil dateTimeUtil;
+    private long DELAY_THRESHOLD_MILL;
 
-    @Autowired
-    public ScheduleService(ScheduleDao scheduleDao, ScheduleExecutionDao scheduleExecutionDao, KafkaProducerService kafkaProducerService) {
+
+    public ScheduleService(ScheduleDao scheduleDao, ScheduleExecutionDao scheduleExecutionDao, KafkaProducerService kafkaProducerService, DateTimeUtil dateTimeUtil, @Value("${schedule.delay.threshold.milli}") long DELAY_THRESHOLD_MILL) {
         this.scheduleDao = scheduleDao;
         this.scheduleExecutionDao = scheduleExecutionDao;
         this.kafkaProducerService = kafkaProducerService;
+        this.dateTimeUtil = dateTimeUtil;
+        this.DELAY_THRESHOLD_MILL = DELAY_THRESHOLD_MILL;
+    }
+
+    public Schedule create(Schedule schedule) throws EntityAlreadyExists {
+        if(schedule.getScheduleTime() < (dateTimeUtil.getEpochMilli() + DELAY_THRESHOLD_MILL)) {
+           execute(schedule);
+        }
+        return scheduleDao.create(schedule);
     }
 
     public void executePartitions(List<String> partition) {

@@ -17,6 +17,7 @@ public class Schedule {
     String uniquenessKey;
     String taskData;
     Delivery delivery;
+    ScheduleStatus status;
     long scheduleTime;
     long enqueTime;
 }
