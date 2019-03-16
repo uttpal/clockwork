@@ -13,4 +13,5 @@ import lombok.ToString;
 public class PartitionOffset {
     private String partitionId;
     private long offsetTimestamp;
+    private long version;
 }

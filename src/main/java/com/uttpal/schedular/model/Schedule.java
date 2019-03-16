@@ -20,4 +20,15 @@ public class Schedule {
     ScheduleStatus status;
     long scheduleTime;
     long enqueTime;
+    long version;
+
+    private Schedule copy() {
+        return new Schedule(clientId, partitionId,orderingKey, uniquenessKey, taskData, delivery, status, scheduleTime, enqueTime, version);
+    }
+
+    public Schedule completeSchedule() {
+        Schedule updateSchedule = copy();
+        updateSchedule.status = ScheduleStatus.EXECUTED;
+        return updateSchedule;
+    }
 }

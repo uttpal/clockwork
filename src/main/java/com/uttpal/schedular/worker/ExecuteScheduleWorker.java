@@ -26,7 +26,7 @@ public class ExecuteScheduleWorker {
         this.scheduleService = scheduleService;
     }
 
-    @Scheduled(fixedRate = 1000)
+    @Scheduled(fixedRate = 100)
     public void executeSchedules() {
         List<String> partitions = schedulerPartitionService.getConsumerPartitionList();
         scheduleService.executePartitions(partitions);
