@@ -89,7 +89,7 @@ public class ScheduleService {
         PartitionOffset partitionOffset = partitionScheduleMap.getPartitionOffset();
 
         try {
-            scheduleExecutionDao.upsert(partitionOffset.getPartitionId(), updatedOffsetTime, partitionOffset.getVersion());
+            scheduleExecutionDao.update(partitionOffset.getPartitionId(), updatedOffsetTime, partitionOffset.getVersion());
             logger.info("Successfully Commited batch {}", partitionScheduleMap);
         } catch (PartitionVersionMismatch partitionVersionMismatch) {
             logger.info("Failed Committing schedule offset batch will be retried {} {}" , partitionScheduleMap, partitionVersionMismatch);

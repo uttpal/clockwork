@@ -41,4 +41,5 @@ public class DynamoDBConfig {
     public AWSCredentials amazonAWSCredentials() {
         return new BasicAWSCredentials(amazonAWSAccessKey, amazonAWSSecretKey);
     }
+
 }
