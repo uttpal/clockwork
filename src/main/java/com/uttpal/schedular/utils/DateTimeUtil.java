@@ -10,7 +10,7 @@ import java.time.Instant;
 @Component
 public class DateTimeUtil {
 
-    public long getEpochMilli() {
-        return Instant.now().toEpochMilli();
+    public long getEpochSecs() {
+        return Instant.now().toEpochMilli() / 1000;
     }
 }

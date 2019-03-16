@@ -30,22 +30,27 @@ public class ScheduleService {
     private KafkaProducerService kafkaProducerService;
     private DateTimeUtil dateTimeUtil;
     private long DELAY_THRESHOLD_SEC;
+    private long MISFIRE_THRESHOLD_SEC;
     private Logger logger = LogManager.getLogger(ScheduleService.class);
 
     @Autowired
-    public ScheduleService(ScheduleDao scheduleDao, ScheduleExecutionDao scheduleExecutionDao, KafkaProducerService kafkaProducerService, DateTimeUtil dateTimeUtil, @Value("${schedule.delay.threshold.sec}") long DELAY_THRESHOLD_SEC) {
+    public ScheduleService(ScheduleDao scheduleDao, ScheduleExecutionDao scheduleExecutionDao, KafkaProducerService kafkaProducerService, DateTimeUtil dateTimeUtil, @Value("${schedule.delay.threshold.sec}") long DELAY_THRESHOLD_SEC, @Value("${schedule.misfire.threshold.sec}"), long MISFIRE_THRESHOLD_SEC) {
         this.scheduleDao = scheduleDao;
         this.scheduleExecutionDao = scheduleExecutionDao;
         this.kafkaProducerService = kafkaProducerService;
         this.dateTimeUtil = dateTimeUtil;
         this.DELAY_THRESHOLD_SEC = DELAY_THRESHOLD_SEC;
+        this.MISFIRE_THRESHOLD_SEC = MISFIRE_THRESHOLD_SEC;
     }
 
     public Schedule create(Schedule schedule) throws EntityAlreadyExists {
-        if(schedule.getScheduleTime() < (dateTimeUtil.getEpochMilli() + DELAY_THRESHOLD_SEC)) {
+        if(schedule.getScheduleTime() < (dateTimeUtil.getEpochSecs() + DELAY_THRESHOLD_SEC)) {
            execute(schedule);
             Schedule updatedSchedule = schedule.completeSchedule();
             return scheduleDao.create(updatedSchedule);
+        }
+        if(schedule.getScheduleTime() < (dateTimeUtil.getEpochSecs() + MISFIRE_THRESHOLD_SEC)) {
+            scheduleExecutionDao.updateVersion(schedule.getPartitionId());
         }
         return scheduleDao.create(schedule);
     }
@@ -73,6 +78,7 @@ public class ScheduleService {
             kafkaProducerService.produce(schedule.getTaskData(), schedule.getOrderingKey(), delivery.getTopic());
         }
         //TODO:: add rest support
+        logger.info("Successfully executed schedule {}", schedule);
         return schedule;
     }
 
@@ -84,7 +90,7 @@ public class ScheduleService {
 
         try {
             scheduleExecutionDao.upsert(partitionOffset.getPartitionId(), updatedOffsetTime, partitionOffset.getVersion());
-            logger.info("Successfully executed batch {}", partitionScheduleMap);
+            logger.info("Successfully Commited batch {}", partitionScheduleMap);
         } catch (PartitionVersionMismatch partitionVersionMismatch) {
             logger.info("Failed Committing schedule offset batch will be retried {} {}" , partitionScheduleMap, partitionVersionMismatch);
         }

@@ -8,5 +8,6 @@ import com.uttpal.schedular.model.PartitionOffset;
  */
 public interface ScheduleExecutionDao {
     PartitionOffset upsert(String partitionId, long updatedOffsetTimestamp, long currentVersion) throws PartitionVersionMismatch;
+    PartitionOffset updateVersion(String partitionId);
     PartitionOffset get(String partitionId);
 }
