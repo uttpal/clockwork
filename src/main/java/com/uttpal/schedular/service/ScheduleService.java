@@ -4,10 +4,7 @@ import com.uttpal.schedular.dao.ScheduleDao;
 import com.uttpal.schedular.dao.ScheduleExecutionDao;
 import com.uttpal.schedular.exception.EntityAlreadyExists;
 import com.uttpal.schedular.exception.PartitionVersionMismatch;
-import com.uttpal.schedular.model.Delivery;
-import com.uttpal.schedular.model.PartitionOffset;
-import com.uttpal.schedular.model.PartitionScheduleMap;
-import com.uttpal.schedular.model.Schedule;
+import com.uttpal.schedular.model.*;
 import com.uttpal.schedular.utils.DateTimeUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,7 +31,7 @@ public class ScheduleService {
     private Logger logger = LogManager.getLogger(ScheduleService.class);
 
     @Autowired
-    public ScheduleService(ScheduleDao scheduleDao, ScheduleExecutionDao scheduleExecutionDao, KafkaProducerService kafkaProducerService, DateTimeUtil dateTimeUtil, @Value("${schedule.delay.threshold.sec}") long DELAY_THRESHOLD_SEC, @Value("${schedule.misfire.threshold.sec}"), long MISFIRE_THRESHOLD_SEC) {
+    public ScheduleService(ScheduleDao scheduleDao, ScheduleExecutionDao scheduleExecutionDao, KafkaProducerService kafkaProducerService, DateTimeUtil dateTimeUtil, @Value("${schedule.delay.threshold.sec}") long DELAY_THRESHOLD_SEC, @Value("${schedule.misfire.threshold.sec}") long MISFIRE_THRESHOLD_SEC) {
         this.scheduleDao = scheduleDao;
         this.scheduleExecutionDao = scheduleExecutionDao;
         this.kafkaProducerService = kafkaProducerService;
@@ -68,7 +65,9 @@ public class ScheduleService {
 
     private PartitionScheduleMap executeSchedules(PartitionScheduleMap partitionScheduleMap) {
         partitionScheduleMap.getSchedules()
-                .forEach(this::execute);
+                .stream()
+                .map(this::execute)
+                .map(schedule -> scheduleDao.updateStatus(schedule.getPartitionId(), schedule.getScheduleTime(), ScheduleStatus.EXECUTED, Instant.now().toEpochMilli(), schedule.getVersion()));
         return partitionScheduleMap;
     }
 

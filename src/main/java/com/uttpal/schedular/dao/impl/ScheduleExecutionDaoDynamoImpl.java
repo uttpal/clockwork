@@ -3,18 +3,17 @@ package com.uttpal.schedular.dao.impl;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.ItemUtils;
-import com.amazonaws.services.dynamodbv2.document.PrimaryKey;
-import com.amazonaws.services.dynamodbv2.document.spec.UpdateItemSpec;
-import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
+
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.util.ImmutableMapParameter;
 import com.google.gson.Gson;
 import com.uttpal.schedular.dao.ScheduleExecutionDao;
 import com.uttpal.schedular.exception.PartitionVersionMismatch;
 import com.uttpal.schedular.model.PartitionOffset;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -28,6 +27,13 @@ public class ScheduleExecutionDaoDynamoImpl implements ScheduleExecutionDao {
     private String scheduleExecutionTableName;
     private Gson gson;
     private String primaryKey = "partitionId";
+
+    @Autowired
+    public ScheduleExecutionDaoDynamoImpl(AmazonDynamoDB dynamoDB, @Value("${dynamodb.table.name.scheduleexecution}") String scheduleExecutionTableName) {
+        this.dynamoDB = dynamoDB;
+        this.scheduleExecutionTableName = scheduleExecutionTableName;
+        this.gson = new Gson();
+    }
 
     @Override
     public PartitionOffset update(String partitionId, long updatedOffsetTimestamp, long currentVersion) throws PartitionVersionMismatch {
@@ -65,7 +71,7 @@ public class ScheduleExecutionDaoDynamoImpl implements ScheduleExecutionDao {
         ImmutableMapParameter<String, AttributeValue> key = new ImmutableMapParameter.Builder<String, AttributeValue>()
                 .put(primaryKey, new AttributeValue(partitionId))
                 .build();
-        Map<String, AttributeValue> partitionOffsetMap = dynamoDB.getItem(scheduleExecutionTableName,key).getItem();
+        Map<String, AttributeValue> partitionOffsetMap = dynamoDB.getItem(scheduleExecutionTableName, key).getItem();
 
         if(Objects.nonNull(partitionOffsetMap)) {
             return attributeMapToPartitonOffset(partitionOffsetMap);

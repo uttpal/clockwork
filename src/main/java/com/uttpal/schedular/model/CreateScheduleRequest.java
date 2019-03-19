@@ -10,8 +10,8 @@ import lombok.ToString;
 @Getter
 public class CreateScheduleRequest {
     String clientId;
+    String scheduleKey;
     String orderingKey;
-    String uniquenessKey;
     String taskData;
     long scheduleTime;
 }

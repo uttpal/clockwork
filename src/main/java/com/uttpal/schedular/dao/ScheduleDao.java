@@ -11,6 +11,10 @@ import java.util.List;
  */
 public interface ScheduleDao {
     Schedule create(Schedule schedule) throws EntityAlreadyExists;
-    Schedule updateStatus(String scheduleId, ScheduleStatus status, long version);
-    public List<Schedule> scanSorted(String partitionId, long afterTime, long tillTime, int batchSize);
+
+    Schedule get(String partitionId, long scheduleTime);
+
+    Schedule updateStatus(String partitiionId, long scheduleTime, ScheduleStatus status, long fireTime, long version);
+
+    List<Schedule> scanSorted(String partitionId, long afterTime, long tillTime, int batchSize);
 }
