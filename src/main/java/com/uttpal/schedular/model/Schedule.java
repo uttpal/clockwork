@@ -10,7 +10,6 @@ import java.time.Instant;
  * @author Uttpal
  */
 @ToString
-@AllArgsConstructor
 @Getter
 public class Schedule {
     String clientId;
@@ -24,6 +23,23 @@ public class Schedule {
     long executionTime;
     long enqueTime;
     long version;
+
+    private Schedule(String clientId, String partitionId, String scheduleKey, String orderingKey, String taskData, Delivery delivery, ScheduleStatus status, long scheduleTime, long executionTime, long enqueTime, long version) {
+        this.clientId = clientId;
+        this.partitionId = partitionId;
+        this.scheduleKey = scheduleKey;
+        this.orderingKey = orderingKey;
+        this.taskData = taskData;
+        this.delivery = delivery;
+        this.status = status;
+        this.scheduleTime = scheduleTime;
+        this.executionTime = executionTime;
+        this.enqueTime = enqueTime;
+        this.version = version;
+    }
+    public static Schedule create(String clientId, String partitionId, String scheduleKey, String orderingKey, String taskData, Delivery delivery, long scheduleTime, long enqueTime) {
+        return new Schedule(clientId, partitionId, scheduleKey, orderingKey, taskData, delivery, ScheduleStatus.PENDING, scheduleTime, 0, enqueTime, 1);
+    }
 
     private Schedule copy() {
         return new Schedule(clientId, partitionId, scheduleKey, orderingKey, taskData, delivery, status, scheduleTime, executionTime, enqueTime, version);

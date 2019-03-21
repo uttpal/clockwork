@@ -13,5 +13,6 @@ public class CreateScheduleRequest {
     String scheduleKey;
     String orderingKey;
     String taskData;
+    Delivery delivery;
     long scheduleTime;
 }

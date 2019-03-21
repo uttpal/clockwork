@@ -1,5 +1,6 @@
 package com.uttpal.schedular.service;
 
+import com.google.gson.Gson;
 import com.uttpal.schedular.dao.ScheduleDao;
 import com.uttpal.schedular.dao.ScheduleExecutionDao;
 import com.uttpal.schedular.exception.EntityAlreadyExists;
@@ -28,16 +29,27 @@ public class ScheduleService {
     private DateTimeUtil dateTimeUtil;
     private long DELAY_THRESHOLD_SEC;
     private long MISFIRE_THRESHOLD_SEC;
+    private String createScheduleTopic;
     private Logger logger = LogManager.getLogger(ScheduleService.class);
+    private Gson gson = new Gson();
 
     @Autowired
-    public ScheduleService(ScheduleDao scheduleDao, ScheduleExecutionDao scheduleExecutionDao, KafkaProducerService kafkaProducerService, DateTimeUtil dateTimeUtil, @Value("${schedule.delay.threshold.sec}") long DELAY_THRESHOLD_SEC, @Value("${schedule.misfire.threshold.sec}") long MISFIRE_THRESHOLD_SEC) {
+    public ScheduleService(ScheduleDao scheduleDao, ScheduleExecutionDao scheduleExecutionDao,
+                           KafkaProducerService kafkaProducerService, DateTimeUtil dateTimeUtil,
+                           @Value("${schedule.delay.threshold.sec}") long DELAY_THRESHOLD_SEC,
+                           @Value("${schedule.misfire.threshold.sec}") long MISFIRE_THRESHOLD_SEC,
+                           @Value("${schedule.kafka.topicName}") String createScheduleTopic) {
         this.scheduleDao = scheduleDao;
         this.scheduleExecutionDao = scheduleExecutionDao;
         this.kafkaProducerService = kafkaProducerService;
         this.dateTimeUtil = dateTimeUtil;
         this.DELAY_THRESHOLD_SEC = DELAY_THRESHOLD_SEC;
         this.MISFIRE_THRESHOLD_SEC = MISFIRE_THRESHOLD_SEC;
+        this.createScheduleTopic = createScheduleTopic;
+    }
+
+    public String schedule(CreateScheduleRequest createScheduleRequest) {
+        return kafkaProducerService.produce(gson.toJson(createScheduleRequest), createScheduleRequest.getOrderingKey(), createScheduleTopic);
     }
 
     public Schedule create(Schedule schedule) throws EntityAlreadyExists {
