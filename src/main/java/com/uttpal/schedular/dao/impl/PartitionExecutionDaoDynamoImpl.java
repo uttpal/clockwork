@@ -7,7 +7,7 @@ import com.amazonaws.services.dynamodbv2.document.ItemUtils;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.util.ImmutableMapParameter;
 import com.google.gson.Gson;
-import com.uttpal.schedular.dao.ScheduleExecutionDao;
+import com.uttpal.schedular.dao.PartitionExecutionDao;
 import com.uttpal.schedular.exception.PartitionVersionMismatch;
 import com.uttpal.schedular.model.PartitionOffset;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,23 +21,24 @@ import java.util.Objects;
  * @author Uttpal
  */
 @Component
-public class ScheduleExecutionDaoDynamoImpl implements ScheduleExecutionDao {
+public class PartitionExecutionDaoDynamoImpl implements PartitionExecutionDao {
 
     private AmazonDynamoDB dynamoDB;
-    private String scheduleExecutionTableName;
+    private String partitionExecutionTableName;
     private Gson gson;
     private String primaryKey = "partitionId";
 
     @Autowired
-    public ScheduleExecutionDaoDynamoImpl(AmazonDynamoDB dynamoDB, @Value("${dynamodb.table.name.scheduleexecution}") String scheduleExecutionTableName) {
+    public PartitionExecutionDaoDynamoImpl(AmazonDynamoDB dynamoDB, @Value("${dynamodb.table.name.partitionexecution}") String partitionExecutionTableName) {
         this.dynamoDB = dynamoDB;
-        this.scheduleExecutionTableName = scheduleExecutionTableName;
+        this.partitionExecutionTableName = partitionExecutionTableName;
         this.gson = new Gson();
     }
 
     @Override
     public PartitionOffset update(String partitionId, long updatedOffsetTimestamp, long currentVersion) throws PartitionVersionMismatch {
         UpdateItemRequest updateRequest = new UpdateItemRequest()
+                .withTableName(partitionExecutionTableName)
                 .withKey(ImmutableMapParameter.of(primaryKey, new AttributeValue(partitionId)))
                 .withUpdateExpression("set #ver = #ver + :increment, #offset = :updatedOffset")
                 .withExpressionAttributeValues(new ImmutableMapParameter.Builder<String, AttributeValue>()
@@ -59,6 +60,7 @@ public class ScheduleExecutionDaoDynamoImpl implements ScheduleExecutionDao {
     @Override
     public PartitionOffset updateVersion(String partitionId) {
         UpdateItemRequest updateRequest = new UpdateItemRequest()
+                .withTableName(partitionExecutionTableName)
                 .withKey(ImmutableMapParameter.of(primaryKey, new AttributeValue(partitionId)))
                 .withUpdateExpression("set version = version + :val")
                 .withExpressionAttributeValues(ImmutableMapParameter.of(":val", new AttributeValue().withN("" + 1)))
@@ -71,7 +73,7 @@ public class ScheduleExecutionDaoDynamoImpl implements ScheduleExecutionDao {
         ImmutableMapParameter<String, AttributeValue> key = new ImmutableMapParameter.Builder<String, AttributeValue>()
                 .put(primaryKey, new AttributeValue(partitionId))
                 .build();
-        Map<String, AttributeValue> partitionOffsetMap = dynamoDB.getItem(scheduleExecutionTableName, key).getItem();
+        Map<String, AttributeValue> partitionOffsetMap = dynamoDB.getItem(partitionExecutionTableName, key).getItem();
 
         if(Objects.nonNull(partitionOffsetMap)) {
             return attributeMapToPartitonOffset(partitionOffsetMap);
@@ -81,7 +83,7 @@ public class ScheduleExecutionDaoDynamoImpl implements ScheduleExecutionDao {
         PartitionOffset newPartition = PartitionOffset.newPartition(partitionId);
         Map<String, AttributeValue> partitionMap = ItemUtils.toAttributeValues(Item.fromJSON(gson.toJson(newPartition)));
         PutItemRequest insertItemRequest = new PutItemRequest()
-                .withTableName(scheduleExecutionTableName)
+                .withTableName(partitionExecutionTableName)
                 .withItem(partitionMap)
                 .withExpected(new ImmutableMapParameter.Builder<String, ExpectedAttributeValue>()
                         // When exists is false and the id already exists a ConditionalCheckFailedException will be thrown

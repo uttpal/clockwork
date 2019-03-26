@@ -43,8 +43,8 @@ public class ScheduleDaoDynamoImpl implements ScheduleDao {
                 .withItem(scheduleAttrMap)
                 .withConditionExpression(String.format("attribute_not_exists(%s) AND attribute_not_exists(%s)", partitionKey, sortKey));
         try {
-            Map<String, AttributeValue> createdScheduleAttrMap = dynamoDB.putItem(putItemRequest).getAttributes();
-            return attributeMapToSchedule(createdScheduleAttrMap);
+            dynamoDB.putItem(putItemRequest);
+            return schedule;
 
         } catch (ConditionalCheckFailedException e) {
             Schedule existingSchedule = get(schedule.getPartitionId(), schedule.getScheduleTime());
@@ -96,18 +96,26 @@ public class ScheduleDaoDynamoImpl implements ScheduleDao {
         QueryRequest queryRequest = new QueryRequest()
                 .withTableName(scheduleTableName)
                 .withConsistentRead(true)
-                .withKeyConditionExpression("partitionId = :part AND scheduleTime BETWEEN :starttime AND :endtime")
+                .withKeyConditionExpression("#partitionId = :part AND #scheduleTime BETWEEN :starttime AND :endtime")
+                .withFilterExpression("#schedulestatus = :schedulestatus")
+                .withExpressionAttributeNames(new ImmutableMapParameter.Builder<String, String>()
+                        .put("#schedulestatus", "status")
+                        .put("#partitionId", "partitionId")
+                        .put("#scheduleTime", "scheduleTime")
+                        .build()
+                )
                 .withExpressionAttributeValues(new ImmutableMapParameter.Builder<String, AttributeValue>()
                         .put(":part", new AttributeValue(partitionId))
+                        .put(":schedulestatus", new AttributeValue(ScheduleStatus.PENDING.name()))
                         .put(":starttime", new AttributeValue().withN("" + afterTime))
                         .put(":endtime", new AttributeValue().withN("" + tillTime))
                         .build()
-                )
-                .withLimit(batchSize);
+                );
 
         List<Map<String, AttributeValue>> schdeuleMaps = dynamoDB.query(queryRequest).getItems();
         return schdeuleMaps.stream()
                 .map(this::attributeMapToSchedule)
+                .limit(batchSize)
                 .collect(Collectors.toList());
     }
 

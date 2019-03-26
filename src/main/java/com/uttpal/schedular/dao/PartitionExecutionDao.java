@@ -6,7 +6,7 @@ import com.uttpal.schedular.model.PartitionOffset;
 /**
  * @author Uttpal
  */
-public interface ScheduleExecutionDao {
+public interface PartitionExecutionDao {
     PartitionOffset update(String partitionId, long updatedOffsetTimestamp, long currentVersion) throws PartitionVersionMismatch;
     PartitionOffset updateVersion(String partitionId);
     PartitionOffset get(String partitionId);

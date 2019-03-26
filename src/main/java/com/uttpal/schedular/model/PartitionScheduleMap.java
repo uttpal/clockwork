@@ -12,4 +12,7 @@ import java.util.List;
 public class PartitionScheduleMap {
     PartitionOffset partitionOffset;
     List<Schedule> schedules;
+    public boolean isNotEmpty() {
+        return !this.schedules.isEmpty();
+    }
 }

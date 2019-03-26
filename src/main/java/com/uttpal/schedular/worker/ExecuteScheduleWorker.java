@@ -1,5 +1,6 @@
 package com.uttpal.schedular.worker;
 
+import com.uttpal.schedular.aspect.NoLogging;
 import com.uttpal.schedular.service.ScheduleService;
 import com.uttpal.schedular.service.SchedulerPartitionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ public class ExecuteScheduleWorker {
         this.scheduleService = scheduleService;
     }
 
+    @NoLogging
     @Scheduled(fixedRate = 100)
     public void executeSchedules() {
         List<String> partitions = schedulerPartitionService.getConsumerPartitionList();

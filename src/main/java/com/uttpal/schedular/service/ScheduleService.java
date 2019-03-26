@@ -2,7 +2,7 @@ package com.uttpal.schedular.service;
 
 import com.google.gson.Gson;
 import com.uttpal.schedular.dao.ScheduleDao;
-import com.uttpal.schedular.dao.ScheduleExecutionDao;
+import com.uttpal.schedular.dao.PartitionExecutionDao;
 import com.uttpal.schedular.exception.EntityAlreadyExists;
 import com.uttpal.schedular.exception.PartitionVersionMismatch;
 import com.uttpal.schedular.model.*;
@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * @author Uttpal
@@ -24,7 +25,7 @@ import java.util.Objects;
 public class ScheduleService {
 
     private ScheduleDao scheduleDao;
-    private ScheduleExecutionDao scheduleExecutionDao;
+    private PartitionExecutionDao partitionExecutionDao;
     private KafkaProducerService kafkaProducerService;
     private DateTimeUtil dateTimeUtil;
     private long DELAY_THRESHOLD_SEC;
@@ -34,13 +35,13 @@ public class ScheduleService {
     private Gson gson = new Gson();
 
     @Autowired
-    public ScheduleService(ScheduleDao scheduleDao, ScheduleExecutionDao scheduleExecutionDao,
+    public ScheduleService(ScheduleDao scheduleDao, PartitionExecutionDao partitionExecutionDao,
                            KafkaProducerService kafkaProducerService, DateTimeUtil dateTimeUtil,
                            @Value("${schedule.delay.threshold.sec}") long DELAY_THRESHOLD_SEC,
                            @Value("${schedule.misfire.threshold.sec}") long MISFIRE_THRESHOLD_SEC,
-                           @Value("${schedule.kafka.topicName}") String createScheduleTopic) {
+                           @Value("${schedule.create.kafka.topicName}") String createScheduleTopic) {
         this.scheduleDao = scheduleDao;
-        this.scheduleExecutionDao = scheduleExecutionDao;
+        this.partitionExecutionDao = partitionExecutionDao;
         this.kafkaProducerService = kafkaProducerService;
         this.dateTimeUtil = dateTimeUtil;
         this.DELAY_THRESHOLD_SEC = DELAY_THRESHOLD_SEC;
@@ -54,23 +55,24 @@ public class ScheduleService {
 
     public Schedule create(Schedule schedule) throws EntityAlreadyExists {
         if(schedule.getScheduleTime() < (dateTimeUtil.getEpochSecs() + DELAY_THRESHOLD_SEC)) {
-           execute(schedule);
+            execute(schedule);
             Schedule updatedSchedule = schedule.completeSchedule();
             return scheduleDao.create(updatedSchedule);
         }
         if(schedule.getScheduleTime() < (dateTimeUtil.getEpochSecs() + MISFIRE_THRESHOLD_SEC)) {
-            scheduleExecutionDao.updateVersion(schedule.getPartitionId());
+            partitionExecutionDao.updateVersion(schedule.getPartitionId());
         }
         return scheduleDao.create(schedule);
     }
 
     public void executePartitions(List<String> partitions) {
         partitions.stream()
-                .map(scheduleExecutionDao::get)
+                .map(partitionExecutionDao::get)
                 .map(partitionOffset -> {
                     List<Schedule> schedules = scheduleDao.scanSorted(partitionOffset.getPartitionId(), partitionOffset.getOffsetTimestamp(), Instant.now().toEpochMilli(), 1);
                     return new PartitionScheduleMap(partitionOffset, schedules);
                 })
+                .filter(PartitionScheduleMap::isNotEmpty)
                 .map(this::executeSchedules)
                 .forEach(this::commitPartitionSchedule);
     }
@@ -79,7 +81,7 @@ public class ScheduleService {
         partitionScheduleMap.getSchedules()
                 .stream()
                 .map(this::execute)
-                .map(schedule -> scheduleDao.updateStatus(schedule.getPartitionId(), schedule.getScheduleTime(), ScheduleStatus.EXECUTED, Instant.now().toEpochMilli(), schedule.getVersion()));
+                .forEach(schedule -> scheduleDao.updateStatus(schedule.getPartitionId(), schedule.getScheduleTime(), ScheduleStatus.EXECUTED, Instant.now().toEpochMilli(), schedule.getVersion()));
         return partitionScheduleMap;
     }
 
@@ -100,7 +102,7 @@ public class ScheduleService {
         PartitionOffset partitionOffset = partitionScheduleMap.getPartitionOffset();
 
         try {
-            scheduleExecutionDao.update(partitionOffset.getPartitionId(), updatedOffsetTime, partitionOffset.getVersion());
+            partitionExecutionDao.update(partitionOffset.getPartitionId(), updatedOffsetTime, partitionOffset.getVersion());
             logger.info("Successfully Commited batch {}", partitionScheduleMap);
         } catch (PartitionVersionMismatch partitionVersionMismatch) {
             logger.info("Failed Committing schedule offset batch will be retried {} {}" , partitionScheduleMap, partitionVersionMismatch);

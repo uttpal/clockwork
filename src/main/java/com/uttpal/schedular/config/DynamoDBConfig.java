@@ -16,10 +16,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class DynamoDBConfig {
 
-    @Value("${amazon.dynamodb.endpoint}")
-    private String amazonDynamoDBEndpoint;
 
-    @Value("${amazon.dynamodb.region")
+    @Value("${amazon.dynamodb.region}")
     private String amazonDyanmoDbRegion;
 
     @Value("${amazon.aws.accesskey}")

@@ -34,13 +34,13 @@ public class CreateScheduleWorker {
         this.scheduleService = scheduleService;
     }
 
-    @KafkaListener(topics = "${kafka.schedule.create.topic}")
+    @KafkaListener(topics = "${schedule.create.kafka.topicName}")
     public void processMessage(String message,
-                               @Header(KafkaHeaders.PARTITION_ID) Integer partition,
-                               @Header(KafkaHeaders.TOPIC) String topic,
-                               @Header(KafkaHeaders.OFFSET) Long offset, Acknowledgment acknowledgment) {
+                               @Header(KafkaHeaders.RECEIVED_PARTITION_ID) Integer partition,
+                               Acknowledgment acknowledgment) {
 
         CreateScheduleRequest request = gson.fromJson(message, CreateScheduleRequest.class);
+//        acknowledgment.acknowledge();
         try {
             scheduleService.create(Schedule.create(request.getClientId(), partition.toString(), request.getScheduleKey(), request.getOrderingKey(), request.getTaskData(), request.getDelivery(), request.getScheduleTime(), Instant.now().toEpochMilli()));
             acknowledgment.acknowledge();
