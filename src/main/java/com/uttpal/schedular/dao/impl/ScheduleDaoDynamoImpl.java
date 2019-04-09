@@ -67,21 +67,21 @@ public class ScheduleDaoDynamoImpl implements ScheduleDao {
     }
 
     @Override
-    public Schedule updateStatus(String partitionId, long scheduleTime, ScheduleStatus status, long fireTime, long version) {
+    public Schedule updateStatus(String partitionId, long scheduleTime, ScheduleStatus status, long executionTime, long version) {
         UpdateItemRequest updateRequest = new UpdateItemRequest()
                 .withTableName(scheduleTableName)
-                .withUpdateExpression("set #ver = #ver + :increment, #status = :status, #fireTime = :firetime")
+                .withUpdateExpression("set #ver = #ver + :increment, #status = :status, #executionTime = :executionTime")
                 .withExpressionAttributeValues(new ImmutableMapParameter.Builder<String, AttributeValue>()
                         .put(":increment", new AttributeValue().withN("" + 1))
                         .put(":status", new AttributeValue(status.name()))
                         .put(":currentVersion", new AttributeValue().withN("" + version))
-                        .put(":fireTime", new AttributeValue().withN("" + fireTime))
+                        .put(":executionTime", new AttributeValue().withN("" + executionTime))
                         .build()
                 )
                 .withExpressionAttributeNames(new ImmutableMapParameter.Builder<String, String>()
                         .put("#ver", "version")
                         .put("#status", "status")
-                        .put("#fireTime", "fireTime")
+                        .put("#executionTime", "executionTime")
                         .build()
                 )
                 .withConditionExpression("#ver = :currentVersion")
