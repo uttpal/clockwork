@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 /**
  * @author Uttpal
@@ -54,12 +53,12 @@ public class ScheduleService {
     }
 
     public Schedule create(Schedule schedule) throws EntityAlreadyExists {
-        if(schedule.getScheduleTime() < (dateTimeUtil.getEpochSecs() + DELAY_THRESHOLD_SEC)) {
+        if(schedule.getScheduleTime() < (dateTimeUtil.getEpochMillis() + DELAY_THRESHOLD_SEC*1000)) {
             execute(schedule);
-            Schedule updatedSchedule = schedule.completeSchedule();
+            Schedule updatedSchedule = schedule.completeSchedule(dateTimeUtil.getEpochMillis());
             return scheduleDao.create(updatedSchedule);
         }
-        if(schedule.getScheduleTime() < (dateTimeUtil.getEpochSecs() + MISFIRE_THRESHOLD_SEC)) {
+        if(schedule.getScheduleTime() < (dateTimeUtil.getEpochMillis() + MISFIRE_THRESHOLD_SEC*1000)) {
             partitionExecutionDao.updateVersion(schedule.getPartitionId());
         }
         return scheduleDao.create(schedule);
@@ -69,7 +68,7 @@ public class ScheduleService {
         partitions.stream()
                 .map(partitionExecutionDao::get)
                 .map(partitionOffset -> {
-                    List<Schedule> schedules = scheduleDao.scanSorted(partitionOffset.getPartitionId(), partitionOffset.getOffsetTimestamp(), Instant.now().toEpochMilli(), 1);
+                    List<Schedule> schedules = scheduleDao.scanSorted(partitionOffset.getPartitionId(), partitionOffset.getOffsetTimestamp(), dateTimeUtil.getEpochMillis(), 1);
                     return new PartitionScheduleMap(partitionOffset, schedules);
                 })
                 .filter(PartitionScheduleMap::isNotEmpty)
@@ -81,7 +80,7 @@ public class ScheduleService {
         partitionScheduleMap.getSchedules()
                 .stream()
                 .map(this::execute)
-                .forEach(schedule -> scheduleDao.updateStatus(schedule.getPartitionId(), schedule.getScheduleTime(), ScheduleStatus.EXECUTED, Instant.now().toEpochMilli(), schedule.getVersion()));
+                .forEach(schedule -> scheduleDao.updateStatus(schedule.getPartitionId(), schedule.getScheduleTime(), ScheduleStatus.EXECUTED, dateTimeUtil.getEpochMillis(), schedule.getVersion()));
         return partitionScheduleMap;
     }
 

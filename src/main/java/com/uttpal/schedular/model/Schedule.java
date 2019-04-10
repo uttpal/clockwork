@@ -45,10 +45,10 @@ public class Schedule {
         return new Schedule(clientId, partitionId, scheduleKey, orderingKey, taskData, delivery, status, scheduleTime, executionTime, enqueTime, version);
     }
 
-    public Schedule completeSchedule() {
+    public Schedule completeSchedule(long currentTime) {
         Schedule updateSchedule = copy();
         updateSchedule.status = ScheduleStatus.EXECUTED;
-        updateSchedule.executionTime = Instant.now().toEpochMilli();
+        updateSchedule.executionTime = currentTime;
         return updateSchedule;
     }
 
