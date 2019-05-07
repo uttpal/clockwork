@@ -53,7 +53,7 @@ public class KafkaConfig {
         factory.setErrorHandler(new SeekToCurrentErrorHandler());
         factory.getContainerProperties().setConsumerRebalanceListener(kafkaRebalanceListener);
         //TODO: enable concurrency
-        factory.setConcurrency(1);
+        factory.setConcurrency(11);
         return factory;
     }
 
@@ -67,13 +67,15 @@ public class KafkaConfig {
         config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, offsetResetPolicy);
 
-////        SASL
-//        String jaasTemplate = "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"%s\" password=\"%s\";";
-//        String jaasCfg = String.format(jaasTemplate, "qsbomzuj", "9eA0R-MijhgPgEnjKUR4762rDx6wwocw");
-//
-//        config.put("security.protocol", "SASL_SSL");
-//        config.put("sasl.mechanism", "SCRAM-SHA-256");
-//        config.put("sasl.jaas.config", jaasCfg);
+
+//        config.put("security.protocol", "SSL");
+//        config.put("ssl.endpoint.identification.algorithm", "");
+//        config.put("ssl.truststore.location", "client.truststore.jks");
+//        config.put("ssl.truststore.password", "secret");
+//        config.put("ssl.keystore.type", "PKCS12");
+//        config.put("ssl.keystore.location", "client.keystore.p12");
+//        config.put("ssl.keystore.password", "secret");
+//        config.put("ssl.key.password", "secret");
 
         return new DefaultKafkaConsumerFactory<>(config);
     }
@@ -93,13 +95,16 @@ public class KafkaConfig {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
 
-//        //Sasl
-//        String jaasTemplate = "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"%s\" password=\"%s\";";
-//        String jaasCfg = String.format(jaasTemplate, "qsbomzuj", "9eA0R-MijhgPgEnjKUR4762rDx6wwocw");
-//
-//        props.put("security.protocol", "SASL_SSL");
-//        props.put("sasl.mechanism", "SCRAM-SHA-256");
-//        props.put("sasl.jaas.config", jaasCfg);
+//        props.put("security.protocol", "SSL");
+//        props.put("ssl.endpoint.identification.algorithm", "");
+//        props.put("ssl.truststore.location", "client.truststore.jks");
+//        props.put("ssl.truststore.password", "secret");
+//        props.put("ssl.keystore.type", "PKCS12");
+//        props.put("ssl.keystore.location", "client.keystore.p12");
+//        props.put("ssl.keystore.password", "secret");
+//        props.put("ssl.key.password", "secret");
+
+
         return props;
     }
 }

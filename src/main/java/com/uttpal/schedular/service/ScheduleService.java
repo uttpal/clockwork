@@ -1,6 +1,7 @@
 package com.uttpal.schedular.service;
 
 import com.google.gson.Gson;
+import com.uttpal.schedular.aspect.NoLogging;
 import com.uttpal.schedular.dao.ScheduleDao;
 import com.uttpal.schedular.dao.PartitionExecutionDao;
 import com.uttpal.schedular.exception.EntityAlreadyExists;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author Uttpal
@@ -64,16 +66,18 @@ public class ScheduleService {
         return scheduleDao.create(schedule);
     }
 
-    public void executePartitions(List<String> partitions) {
-        partitions.stream()
+    @NoLogging
+    public List<PartitionScheduleMap> executePartitions(List<String> partitions) {
+        return partitions.stream()
                 .map(partitionExecutionDao::get)
                 .map(partitionOffset -> {
-                    List<Schedule> schedules = scheduleDao.scanSorted(partitionOffset.getPartitionId(), partitionOffset.getOffsetTimestamp(), dateTimeUtil.getEpochMillis(), 1);
+                    List<Schedule> schedules = scheduleDao.scanSorted(partitionOffset.getPartitionId(), partitionOffset.getOffsetTimestamp(), dateTimeUtil.getEpochMillis(), 100);
                     return new PartitionScheduleMap(partitionOffset, schedules);
                 })
                 .filter(PartitionScheduleMap::isNotEmpty)
                 .map(this::executeSchedules)
-                .forEach(this::commitPartitionSchedule);
+                .map(this::commitPartitionSchedule)
+                .collect(Collectors.toList());
     }
 
     private PartitionScheduleMap executeSchedules(PartitionScheduleMap partitionScheduleMap) {

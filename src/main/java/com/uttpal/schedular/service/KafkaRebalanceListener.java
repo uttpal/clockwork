@@ -26,11 +26,27 @@ public class KafkaRebalanceListener implements ConsumerAwareRebalanceListener {
 
     @Override
     public void onPartitionsAssigned(Consumer<?, ?> consumer, Collection<TopicPartition> partitions) {
-        List<String> partitionIds = partitions
+        updateSchedulerExecutionPartitions(consumer);
+    }
+
+    @Override
+    public void onPartitionsRevokedBeforeCommit(Consumer<?, ?> consumer, Collection<TopicPartition> partitions) {
+        updateSchedulerExecutionPartitions(consumer);
+    }
+
+    @Override
+    public void onPartitionsRevokedAfterCommit(Consumer<?, ?> consumer, Collection<TopicPartition> partitions) {
+        updateSchedulerExecutionPartitions(consumer);
+    }
+
+    private void updateSchedulerExecutionPartitions(Consumer<?, ?> consumer) {
+        List<String> partitionIds = consumer.assignment()
                 .stream()
                 .map(TopicPartition::partition)
                 .map(String::valueOf)
                 .collect(Collectors.toList());
-        schedulerPartitionService.updatePartitions(partitionIds);
+        schedulerPartitionService.updatePartitions(consumer.toString(), partitionIds);
     }
+
+
 }

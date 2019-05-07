@@ -6,6 +6,7 @@ import com.amazonaws.services.dynamodbv2.document.ItemUtils;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.util.ImmutableMapParameter;
 import com.google.gson.Gson;
+import com.uttpal.schedular.aspect.NoLogging;
 import com.uttpal.schedular.dao.ScheduleDao;
 import com.uttpal.schedular.exception.EntityAlreadyExists;
 import com.uttpal.schedular.model.Schedule;
@@ -92,6 +93,7 @@ public class ScheduleDaoDynamoImpl implements ScheduleDao {
     }
 
     @Override
+    @NoLogging
     public List<Schedule> scanSorted(String partitionId, long afterTime, long tillTime, int batchSize) {
         QueryRequest queryRequest = new QueryRequest()
                 .withTableName(scheduleTableName)

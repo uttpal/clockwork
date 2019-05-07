@@ -7,6 +7,7 @@ import com.amazonaws.services.dynamodbv2.document.ItemUtils;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.util.ImmutableMapParameter;
 import com.google.gson.Gson;
+import com.uttpal.schedular.aspect.NoLogging;
 import com.uttpal.schedular.dao.PartitionExecutionDao;
 import com.uttpal.schedular.exception.PartitionVersionMismatch;
 import com.uttpal.schedular.model.PartitionOffset;
@@ -69,6 +70,7 @@ public class PartitionExecutionDaoDynamoImpl implements PartitionExecutionDao {
     }
 
     @Override
+    @NoLogging
     public PartitionOffset get(String partitionId) {
         ImmutableMapParameter<String, AttributeValue> key = new ImmutableMapParameter.Builder<String, AttributeValue>()
                 .put(primaryKey, new AttributeValue(partitionId))

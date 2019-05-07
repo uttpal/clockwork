@@ -24,3 +24,9 @@ HELP.md
 /nbdist/
 /.nb-gradle/
 /build/
+
+*.p12
+*.jks
+*.jar
+newrelic/*
+application-dev.properties
