@@ -106,7 +106,7 @@ public class ScheduleService {
             kafkaProducerService.produce(schedule.getTaskData(), schedule.getOrderingKey(), delivery.getTopic());
         }
         //TODO:: add rest support
-        logger.info("Successfully executed schedule {}", schedule);
+        logger.info("Successfully executed schedule {} execution latency is {} ms", schedule, dateTimeUtil.getEpochMillis() - schedule.getScheduleTime());
         return schedule;
     }
 
