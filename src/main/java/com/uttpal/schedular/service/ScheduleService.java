@@ -124,7 +124,4 @@ public class ScheduleService {
         }
         return partitionScheduleMap;
     }
-
-
-
 }
