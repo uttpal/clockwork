@@ -42,14 +42,7 @@ public class ExecuteScheduleWorker implements CommandLineRunner {
     }
 
 
-    @Async
-    public CompletableFuture<List<PartitionScheduleMap>> excecutePartitionSchedule(String partition) {
-        List<PartitionScheduleMap> executedSchedules = scheduleService.executePartitions(Collections.singletonList(partition));
-        if(!executedSchedules.isEmpty()) {
-            logger.info("SuccessFully Executed {}", executedSchedules);
-        }
-        return CompletableFuture.completedFuture(executedSchedules);
-    }
+
 
     @NoLogging
     @Override
@@ -59,7 +52,7 @@ public class ExecuteScheduleWorker implements CommandLineRunner {
             try {
                 List<String> partitions = schedulerPartitionService.getConsumerPartitionList();
                 List<PartitionScheduleMap> executions = partitions.stream()
-                        .map(this::excecutePartitionSchedule)
+                        .map(scheduleService::excecutePartitionSchedule)
                         .map(this::getFromCompleteableFuture)
                         .flatMap(Collection::stream)
                         .collect(Collectors.toList());

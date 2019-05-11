@@ -12,11 +12,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -78,6 +81,15 @@ public class ScheduleService {
                 .map(this::executeSchedules)
                 .map(this::commitPartitionSchedule)
                 .collect(Collectors.toList());
+    }
+
+    @Async
+    public CompletableFuture<List<PartitionScheduleMap>> excecutePartitionSchedule(String partition) {
+        List<PartitionScheduleMap> executedSchedules = executePartitions(Collections.singletonList(partition));
+        if(!executedSchedules.isEmpty()) {
+            logger.info("SuccessFully Executed {}", executedSchedules);
+        }
+        return CompletableFuture.completedFuture(executedSchedules);
     }
 
     private PartitionScheduleMap executeSchedules(PartitionScheduleMap partitionScheduleMap) {
