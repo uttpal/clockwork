@@ -84,6 +84,7 @@ public class ScheduleService {
     }
 
     @Async
+    @NoLogging
     public CompletableFuture<List<PartitionScheduleMap>> excecutePartitionSchedule(String partition) {
         List<PartitionScheduleMap> executedSchedules = executePartitions(Collections.singletonList(partition));
         if(!executedSchedules.isEmpty()) {
