@@ -12,9 +12,11 @@ import java.util.List;
 public interface ScheduleDao {
     Schedule create(Schedule schedule) throws EntityAlreadyExists;
 
-    Schedule get(String partitionId, long scheduleTime);
+    Schedule createExecuted(Schedule schedule);
 
-    Schedule updateStatus(String partitiionId, long scheduleTime, ScheduleStatus status, long fireTime, long version);
+    String deleteSchedule(String partitionId, long scheduleTime);
+
+    Schedule get(String partitionId, long scheduleTime);
 
     List<Schedule> scanSorted(String partitionId, long afterTime, long tillTime, int batchSize);
 }

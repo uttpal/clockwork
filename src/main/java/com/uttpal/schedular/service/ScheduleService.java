@@ -97,7 +97,8 @@ public class ScheduleService {
         partitionScheduleMap.getSchedules()
                 .stream()
                 .map(this::execute)
-                .forEach(schedule -> scheduleDao.updateStatus(schedule.getPartitionId(), schedule.getScheduleTime(), ScheduleStatus.EXECUTED, dateTimeUtil.getEpochMillis(), schedule.getVersion()));
+                .map(schedule -> scheduleDao.createExecuted(schedule.completeSchedule(dateTimeUtil.getEpochMillis())))
+                .forEach(schedule -> scheduleDao.deleteSchedule(schedule.getPartitionId(), schedule.getScheduleTime()));
         return partitionScheduleMap;
     }
 
