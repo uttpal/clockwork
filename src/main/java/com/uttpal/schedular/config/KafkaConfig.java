@@ -53,7 +53,7 @@ public class KafkaConfig {
         factory.setErrorHandler(new SeekToCurrentErrorHandler());
         factory.getContainerProperties().setConsumerRebalanceListener(kafkaRebalanceListener);
         //TODO: enable concurrency
-        factory.setConcurrency(11);
+        factory.setConcurrency(1);
         return factory;
     }
 
