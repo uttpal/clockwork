@@ -15,7 +15,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.sql.Array;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -59,9 +61,8 @@ public class ScheduleService {
 
     public Schedule create(Schedule schedule) throws EntityAlreadyExists {
         if(schedule.getScheduleTime() < (dateTimeUtil.getEpochMillis() + DELAY_THRESHOLD_SEC*1000)) {
-            execute(schedule);
-            Schedule updatedSchedule = schedule.completeSchedule(dateTimeUtil.getEpochMillis());
-            return scheduleDao.create(updatedSchedule);
+            executeSchedules(new PartitionScheduleMap(null, Collections.singletonList(schedule)));
+            return schedule;
         }
         if(schedule.getScheduleTime() < (dateTimeUtil.getEpochMillis() + MISFIRE_THRESHOLD_SEC*1000)) {
             partitionExecutionDao.updateVersion(schedule.getPartitionId());
