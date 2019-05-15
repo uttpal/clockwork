@@ -38,7 +38,7 @@ public class Schedule {
         this.version = version;
     }
     public static Schedule create(String clientId, String partitionId, String scheduleKey, String orderingKey, String taskData, Delivery delivery, long scheduleTime, long enqueTime) {
-        return new Schedule(clientId, partitionId, scheduleKey, orderingKey, taskData, delivery, ScheduleStatus.PENDING, scheduleTime, 0, enqueTime, 1);
+        return new Schedule(clientId, partitionId, clientId + "-" +scheduleKey, orderingKey, taskData, delivery, ScheduleStatus.PENDING, scheduleTime, 0, enqueTime, 1);
     }
 
     private Schedule copy() {
