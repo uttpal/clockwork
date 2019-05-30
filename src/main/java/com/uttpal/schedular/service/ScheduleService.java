@@ -116,11 +116,12 @@ public class ScheduleService {
         List<Schedule> executedSchedules = partitionScheduleMap.getSchedules()
                 .stream()
                 .map(this::execute)
-                .map(schedule -> schedule.completeSchedule(dateTimeUtil.getEpochMillis()))
+                .map(schedule -> schedule.completeSchedule(dateTimeUtil.getEpochMillis(), dateTimeUtil.getExecutedTtl()))
                 .collect(Collectors.toList());
 
         scheduleDao.batchCreateExecuted(executedSchedules);
         scheduleDao.batchDeleteSchedules(executedSchedules);
+
         return partitionScheduleMap;
     }
 
