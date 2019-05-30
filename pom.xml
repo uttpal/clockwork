@@ -81,6 +81,12 @@
             <artifactId>logstash-logback-encoder</artifactId>
             <version>5.2</version>
         </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-elastic</artifactId>
+            <version>1.1.4</version>
+        </dependency>
+
     </dependencies>
 
     <dependencyManagement>

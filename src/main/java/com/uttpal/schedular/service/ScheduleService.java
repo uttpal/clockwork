@@ -8,6 +8,11 @@ import com.uttpal.schedular.exception.EntityAlreadyExists;
 import com.uttpal.schedular.exception.PartitionVersionMismatch;
 import com.uttpal.schedular.model.*;
 import com.uttpal.schedular.utils.DateTimeUtil;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.elastic.ElasticConfig;
+import io.micrometer.elastic.ElasticMeterRegistry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,13 +20,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.sql.Array;
-import java.time.Instant;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -37,15 +40,20 @@ public class ScheduleService {
     private long DELAY_THRESHOLD_SEC;
     private long MISFIRE_THRESHOLD_SEC;
     private String createScheduleTopic;
+    private Timer executiontimer;
     private Logger logger = LogManager.getLogger(ScheduleService.class);
     private Gson gson = new Gson();
+
+    private Timer creationTimer;
+
 
     @Autowired
     public ScheduleService(ScheduleDao scheduleDao, PartitionExecutionDao partitionExecutionDao,
                            KafkaProducerService kafkaProducerService, DateTimeUtil dateTimeUtil,
                            @Value("${schedule.delay.threshold.sec}") long DELAY_THRESHOLD_SEC,
                            @Value("${schedule.misfire.threshold.sec}") long MISFIRE_THRESHOLD_SEC,
-                           @Value("${schedule.create.kafka.topicName}") String createScheduleTopic) {
+                           @Value("${schedule.create.kafka.topicName}") String createScheduleTopic,
+                           ElasticConfig elasticConfig) {
         this.scheduleDao = scheduleDao;
         this.partitionExecutionDao = partitionExecutionDao;
         this.kafkaProducerService = kafkaProducerService;
@@ -53,6 +61,18 @@ public class ScheduleService {
         this.DELAY_THRESHOLD_SEC = DELAY_THRESHOLD_SEC;
         this.MISFIRE_THRESHOLD_SEC = MISFIRE_THRESHOLD_SEC;
         this.createScheduleTopic = createScheduleTopic;
+        MeterRegistry registry = new ElasticMeterRegistry(elasticConfig, Clock.SYSTEM);
+
+        this.executiontimer = Timer
+                .builder("execution.timer")
+                .description("execution latency")
+                .register(registry);
+
+        this.creationTimer = Timer
+                .builder("creation.timer")
+                .description("creation latency")
+                .register(registry);
+
     }
 
     public String schedule(CreateScheduleRequest createScheduleRequest) {
@@ -60,6 +80,7 @@ public class ScheduleService {
     }
 
     public Schedule create(Schedule schedule) throws EntityAlreadyExists {
+        creationTimer.record(1, TimeUnit.MILLISECONDS);
         if(schedule.getScheduleTime() < (dateTimeUtil.getEpochMillis() + DELAY_THRESHOLD_SEC*1000)) {
             executeSchedules(new PartitionScheduleMap(null, Collections.singletonList(schedule)));
             return schedule;
@@ -109,6 +130,7 @@ public class ScheduleService {
             kafkaProducerService.produce(schedule.getTaskData(), schedule.getOrderingKey(), delivery.getTopic());
         }
         //TODO:: add rest support
+        executiontimer.record(dateTimeUtil.getEpochMillis() - schedule.getScheduleTime(), TimeUnit.MILLISECONDS);
         logger.info("Successfully executed schedule {} execution latency is {} ms", schedule, dateTimeUtil.getEpochMillis() - schedule.getScheduleTime());
         return schedule;
     }
