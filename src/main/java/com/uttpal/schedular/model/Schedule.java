@@ -23,6 +23,7 @@ public class Schedule {
     long executionTime;
     long enqueTime;
     long version;
+    Long ttl;
 
     private Schedule(String clientId, String partitionId, String scheduleKey, String orderingKey, String taskData, Delivery delivery, ScheduleStatus status, long scheduleTime, long executionTime, long enqueTime, long version) {
         this.clientId = clientId;
@@ -45,10 +46,11 @@ public class Schedule {
         return new Schedule(clientId, partitionId, scheduleKey, orderingKey, taskData, delivery, status, scheduleTime, executionTime, enqueTime, version);
     }
 
-    public Schedule completeSchedule(long currentTime) {
+    public Schedule completeSchedule(long currentTime, long ttl) {
         Schedule updateSchedule = copy();
         updateSchedule.status = ScheduleStatus.EXECUTED;
         updateSchedule.executionTime = currentTime;
+        updateSchedule.ttl = ttl;
         return updateSchedule;
     }
 

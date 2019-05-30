@@ -119,7 +119,7 @@ public class ScheduleService {
         partitionScheduleMap.getSchedules()
                 .stream()
                 .map(this::execute)
-                .map(schedule -> scheduleDao.createExecuted(schedule.completeSchedule(dateTimeUtil.getEpochMillis())))
+                .map(schedule -> scheduleDao.createExecuted(schedule.completeSchedule(dateTimeUtil.getEpochMillis(), dateTimeUtil.getExecutedTtl())))
                 .forEach(schedule -> scheduleDao.deleteSchedule(schedule.getPartitionId(), schedule.getScheduleTime()));
         return partitionScheduleMap;
     }
