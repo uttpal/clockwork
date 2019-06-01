@@ -63,9 +63,9 @@ public class ExecuteScheduleWorker implements CommandLineRunner {
                     emptyScheduleBackoffCountDown = backoffThreshold;
                 }
 
-                if(emptyScheduleBackoffCountDown == 0) {
-                    Thread.sleep(backoffSleepTimeSec * 1000);
-                }
+//                if(emptyScheduleBackoffCountDown == 0) {
+//                    Thread.sleep(backoffSleepTimeSec * 1000);
+//                }
             } catch (Exception e) {
                 logger.error("Error while executing schedules", e);
             }
