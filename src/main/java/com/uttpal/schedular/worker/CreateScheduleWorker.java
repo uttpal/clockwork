@@ -38,8 +38,7 @@ public class CreateScheduleWorker {
 
     @KafkaListener(topics = "${schedule.create.kafka.topicName}")
     public void processMessage(String message,
-                               @Header(KafkaHeaders.RECEIVED_PARTITION_ID) Integer partition,
-                               Acknowledgment acknowledgment) {
+                               @Header(KafkaHeaders.RECEIVED_PARTITION_ID) Integer partition) {
 
         CreateScheduleRequest request = gson.fromJson(message, CreateScheduleRequest.class);
         try {
