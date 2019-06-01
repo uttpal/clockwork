@@ -64,18 +64,18 @@ public class KafkaConfig {
         config.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroup);
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+//        config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, offsetResetPolicy);
 
 
-//        config.put("security.protocol", "SSL");
-//        config.put("ssl.endpoint.identification.algorithm", "");
-//        config.put("ssl.truststore.location", "client.truststore.jks");
-//        config.put("ssl.truststore.password", "secret");
-//        config.put("ssl.keystore.type", "PKCS12");
-//        config.put("ssl.keystore.location", "client.keystore.p12");
-//        config.put("ssl.keystore.password", "secret");
-//        config.put("ssl.key.password", "secret");
+        config.put("security.protocol", "SSL");
+        config.put("ssl.endpoint.identification.algorithm", "");
+        config.put("ssl.truststore.location", "client.truststore.jks");
+        config.put("ssl.truststore.password", "secret");
+        config.put("ssl.keystore.type", "PKCS12");
+        config.put("ssl.keystore.location", "client.keystore.p12");
+        config.put("ssl.keystore.password", "secret");
+        config.put("ssl.key.password", "secret");
 
         return new DefaultKafkaConsumerFactory<>(config);
     }
@@ -95,14 +95,14 @@ public class KafkaConfig {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
 
-//        props.put("security.protocol", "SSL");
-//        props.put("ssl.endpoint.identification.algorithm", "");
-//        props.put("ssl.truststore.location", "client.truststore.jks");
-//        props.put("ssl.truststore.password", "secret");
-//        props.put("ssl.keystore.type", "PKCS12");
-//        props.put("ssl.keystore.location", "client.keystore.p12");
-//        props.put("ssl.keystore.password", "secret");
-//        props.put("ssl.key.password", "secret");
+        props.put("security.protocol", "SSL");
+        props.put("ssl.endpoint.identification.algorithm", "");
+        props.put("ssl.truststore.location", "client.truststore.jks");
+        props.put("ssl.truststore.password", "secret");
+        props.put("ssl.keystore.type", "PKCS12");
+        props.put("ssl.keystore.location", "client.keystore.p12");
+        props.put("ssl.keystore.password", "secret");
+        props.put("ssl.key.password", "secret");
 
 
         return props;
