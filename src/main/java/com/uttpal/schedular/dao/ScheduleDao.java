@@ -1,5 +1,6 @@
 package com.uttpal.schedular.dao;
 
+import com.uttpal.schedular.aspect.NoLogging;
 import com.uttpal.schedular.exception.EntityAlreadyExists;
 import com.uttpal.schedular.model.Schedule;
 import com.uttpal.schedular.model.ScheduleStatus;
@@ -12,11 +13,13 @@ import java.util.List;
 public interface ScheduleDao {
     Schedule create(Schedule schedule) throws EntityAlreadyExists;
 
-    Schedule createExecuted(Schedule schedule);
+    List<Schedule> batchDeleteSchedules(List<Schedule> schedules);
 
-    String deleteSchedule(String partitionId, long scheduleTime);
+    List<Schedule> batchCreateExecuted(List<Schedule> schedules);
+
 
     Schedule get(String partitionId, long scheduleTime);
 
-    List<Schedule> scanSorted(String partitionId, long afterTime, long tillTime, int batchSize);
+    @NoLogging
+    List<Schedule> scanSorted(String partitionId, long currentTime, int batchSize);
 }

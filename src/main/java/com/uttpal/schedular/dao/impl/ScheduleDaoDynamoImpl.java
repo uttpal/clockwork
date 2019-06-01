@@ -62,7 +62,7 @@ public class ScheduleDaoDynamoImpl implements ScheduleDao {
         }
     }
 
-    @Override
+    //TODO: remove
     public Schedule createExecuted(Schedule schedule) {
         if(!schedule.getStatus().equals(ScheduleStatus.EXECUTED)) {
             throw new RuntimeException("Schedule has not yet executed " + schedule);
@@ -81,6 +81,48 @@ public class ScheduleDaoDynamoImpl implements ScheduleDao {
     }
 
     @Override
+    public List<Schedule> batchDeleteSchedules(List<Schedule> schedules) {
+        List<WriteRequest> deleteRequests = schedules.stream()
+                .map(schedule ->
+                        new ImmutableMapParameter.Builder<String, AttributeValue>()
+                                .put(partitionKey, new AttributeValue(schedule.getPartitionId()))
+                                .put(sortKey, new AttributeValue().withN("" + schedule.getScheduleTime()))
+                                .build()
+                )
+                .map(DeleteRequest::new)
+                .map(WriteRequest::new)
+                .collect(Collectors.toList());
+        executeBatchWrite(scheduleTableName, deleteRequests);
+        return schedules;
+
+    }
+
+    @Override
+    public List<Schedule> batchCreateExecuted(List<Schedule> schedules) {
+        List<WriteRequest> writeRequests = schedules.stream()
+                .map(this::getCreateExecutedRequest)
+                .collect(Collectors.toList());
+
+        executeBatchWrite(executedScheduleTableName, writeRequests);
+        return schedules;
+    }
+
+    private WriteRequest getCreateExecutedRequest(Schedule schedule){
+        Map<String, AttributeValue> scheduleAttrMap = ItemUtils.toAttributeValues(Item.fromJSON(gson.toJson(schedule)));
+        return new WriteRequest(new PutRequest(scheduleAttrMap));
+    }
+
+    private BatchWriteItemResult executeBatchWrite(String tableName, List<WriteRequest> writeRequests) {
+        BatchWriteItemRequest batchWriteItemRequest = new BatchWriteItemRequest().addRequestItemsEntry(tableName, writeRequests);
+        BatchWriteItemResult result = dynamoDB.batchWriteItem(batchWriteItemRequest);
+        while (!result.getUnprocessedItems().isEmpty()) {
+            result = dynamoDB.batchWriteItem(result.getUnprocessedItems());
+        }
+        return result;
+    }
+
+
+    //TODO: remove
     public String deleteSchedule(String partitionId, long scheduleTime) {
         dynamoDB.deleteItem(scheduleTableName, new ImmutableMapParameter.Builder<String, AttributeValue>()
                 .put(partitionKey, new AttributeValue(partitionId))
@@ -102,38 +144,13 @@ public class ScheduleDaoDynamoImpl implements ScheduleDao {
         return Objects.nonNull(scheduleMap) ? attributeMapToSchedule(scheduleMap) : null;
     }
 
-//    @Override
-//    public Schedule updateStatus(String partitionId, long scheduleTime, ScheduleStatus status, long executionTime, long version) {
-//        UpdateItemRequest updateRequest = new UpdateItemRequest()
-//                .withTableName(scheduleTableName)
-//                .withUpdateExpression("set #ver = #ver + :increment, #status = :status, #executionTime = :executionTime")
-//                .withExpressionAttributeValues(new ImmutableMapParameter.Builder<String, AttributeValue>()
-//                        .put(":increment", new AttributeValue().withN("" + 1))
-//                        .put(":status", new AttributeValue(status.name()))
-//                        .put(":currentVersion", new AttributeValue().withN("" + version))
-//                        .put(":executionTime", new AttributeValue().withN("" + executionTime))
-//                        .build()
-//                )
-//                .withExpressionAttributeNames(new ImmutableMapParameter.Builder<String, String>()
-//                        .put("#ver", "version")
-//                        .put("#status", "status")
-//                        .put("#executionTime", "executionTime")
-//                        .build()
-//                )
-//                .withConditionExpression("#ver = :currentVersion")
-//                .withKey(new AbstractMap.SimpleEntry<>(partitionKey, new AttributeValue(partitionId)), new AbstractMap.SimpleEntry<>(sortKey, new AttributeValue().withN("" + scheduleTime)))
-//                .withReturnValues(ReturnValue.UPDATED_NEW);
-//
-//        return attributeMapToSchedule(dynamoDB.updateItem(updateRequest).getAttributes());
-//    }
-
     @Override
     @NoLogging
-    public List<Schedule> scanSorted(String partitionId, long afterTime, long tillTime, int batchSize) {
+    public List<Schedule> scanSorted(String partitionId, long currentTime, int batchSize) {
         QueryRequest queryRequest = new QueryRequest()
                 .withTableName(scheduleTableName)
                 .withConsistentRead(true)
-                .withKeyConditionExpression("#partitionId = :part AND #scheduleTime BETWEEN :starttime AND :endtime")
+                .withKeyConditionExpression("#partitionId = :part AND #scheduleTime LE :currentTime")
                 .withExpressionAttributeNames(new ImmutableMapParameter.Builder<String, String>()
                         .put("#partitionId", "partitionId")
                         .put("#scheduleTime", "scheduleTime")
@@ -141,8 +158,7 @@ public class ScheduleDaoDynamoImpl implements ScheduleDao {
                 )
                 .withExpressionAttributeValues(new ImmutableMapParameter.Builder<String, AttributeValue>()
                         .put(":part", new AttributeValue(partitionId))
-                        .put(":starttime", new AttributeValue().withN("" + afterTime))
-                        .put(":endtime", new AttributeValue().withN("" + tillTime))
+                        .put(":currentTime", new AttributeValue().withN("" + currentTime))
                         .build()
                 );
 

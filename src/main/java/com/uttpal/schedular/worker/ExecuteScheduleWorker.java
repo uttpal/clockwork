@@ -51,7 +51,7 @@ public class ExecuteScheduleWorker implements CommandLineRunner {
         while (true) {
             try {
                 List<String> partitions = schedulerPartitionService.getConsumerPartitionList();
-                List<PartitionScheduleMap> executions = partitions.stream()
+                List<PartitionScheduleMap> executions = partitions.parallelStream()
                         .map(scheduleService::excecutePartitionSchedule)
                         .map(this::getFromCompleteableFuture)
                         .flatMap(Collection::stream)

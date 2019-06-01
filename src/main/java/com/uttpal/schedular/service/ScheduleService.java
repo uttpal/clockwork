@@ -5,7 +5,6 @@ import com.uttpal.schedular.aspect.NoLogging;
 import com.uttpal.schedular.dao.ScheduleDao;
 import com.uttpal.schedular.dao.PartitionExecutionDao;
 import com.uttpal.schedular.exception.EntityAlreadyExists;
-import com.uttpal.schedular.exception.PartitionVersionMismatch;
 import com.uttpal.schedular.model.*;
 import com.uttpal.schedular.utils.DateTimeUtil;
 import io.micrometer.core.instrument.Clock;
@@ -85,23 +84,21 @@ public class ScheduleService {
             executeSchedules(new PartitionScheduleMap(null, Collections.singletonList(schedule)));
             return schedule;
         }
-        if(schedule.getScheduleTime() < (dateTimeUtil.getEpochMillis() + MISFIRE_THRESHOLD_SEC*1000)) {
-            partitionExecutionDao.updateVersion(schedule.getPartitionId());
-        }
+//        if(schedule.getScheduleTime() < (dateTimeUtil.getEpochMillis() + MISFIRE_THRESHOLD_SEC*1000)) {
+//            partitionExecutionDao.updateVersion(schedule.getPartitionId());
+//        }
         return scheduleDao.create(schedule);
     }
 
     @NoLogging
     public List<PartitionScheduleMap> executePartitions(List<String> partitions) {
         return partitions.stream()
-                .map(partitionExecutionDao::get)
-                .map(partitionOffset -> {
-                    List<Schedule> schedules = scheduleDao.scanSorted(partitionOffset.getPartitionId(), partitionOffset.getOffsetTimestamp(), dateTimeUtil.getEpochMillis(), 100);
-                    return new PartitionScheduleMap(partitionOffset, schedules);
+                .map(partition -> {
+                    List<Schedule> schedules = scheduleDao.scanSorted(partition, dateTimeUtil.getEpochMillis(), 25);
+                    return new PartitionScheduleMap(partition, schedules);
                 })
                 .filter(PartitionScheduleMap::isNotEmpty)
                 .map(this::executeSchedules)
-                .map(this::commitPartitionSchedule)
                 .collect(Collectors.toList());
     }
 
@@ -116,11 +113,14 @@ public class ScheduleService {
     }
 
     private PartitionScheduleMap executeSchedules(PartitionScheduleMap partitionScheduleMap) {
-        partitionScheduleMap.getSchedules()
+        List<Schedule> executedSchedules = partitionScheduleMap.getSchedules()
                 .stream()
                 .map(this::execute)
-                .map(schedule -> scheduleDao.createExecuted(schedule.completeSchedule(dateTimeUtil.getEpochMillis(), dateTimeUtil.getExecutedTtl())))
-                .forEach(schedule -> scheduleDao.deleteSchedule(schedule.getPartitionId(), schedule.getScheduleTime()));
+                .map(schedule -> schedule.completeSchedule(dateTimeUtil.getEpochMillis()))
+                .collect(Collectors.toList());
+
+        scheduleDao.batchCreateExecuted(executedSchedules);
+        scheduleDao.batchDeleteSchedules(executedSchedules);
         return partitionScheduleMap;
     }
 
@@ -133,20 +133,5 @@ public class ScheduleService {
         executiontimer.record(dateTimeUtil.getEpochMillis() - schedule.getScheduleTime(), TimeUnit.MILLISECONDS);
         logger.info("Successfully executed schedule {} execution latency is {} ms", schedule, dateTimeUtil.getEpochMillis() - schedule.getScheduleTime());
         return schedule;
-    }
-
-    private PartitionScheduleMap commitPartitionSchedule(PartitionScheduleMap partitionScheduleMap) {
-        List<Schedule> schedules = partitionScheduleMap.getSchedules();
-        long updatedOffsetTime = schedules.get(schedules.size() - 1).getScheduleTime();
-
-        PartitionOffset partitionOffset = partitionScheduleMap.getPartitionOffset();
-
-        try {
-            partitionExecutionDao.update(partitionOffset.getPartitionId(), updatedOffsetTime, partitionOffset.getVersion());
-            logger.info("Successfully Commited batch {}", partitionScheduleMap);
-        } catch (PartitionVersionMismatch partitionVersionMismatch) {
-            logger.info("Failed Committing schedule offset batch will be retried {} {}" , partitionScheduleMap, partitionVersionMismatch);
-        }
-        return partitionScheduleMap;
     }
 }
