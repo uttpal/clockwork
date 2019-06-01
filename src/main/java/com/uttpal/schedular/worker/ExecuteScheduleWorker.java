@@ -33,7 +33,7 @@ public class ExecuteScheduleWorker implements CommandLineRunner {
     private SchedulerPartitionService schedulerPartitionService;
     private ScheduleService scheduleService;
     private int backoffThreshold = 5;
-    private long backoffSleepTimeSec = 10;
+    private long backoffSleepTimeSec = 1;
 
     @Autowired
     public ExecuteScheduleWorker(SchedulerPartitionService schedulerPartitionService, ScheduleService scheduleService) {
@@ -63,9 +63,9 @@ public class ExecuteScheduleWorker implements CommandLineRunner {
                     emptyScheduleBackoffCountDown = backoffThreshold;
                 }
 
-//                if(emptyScheduleBackoffCountDown == 0) {
-//                    Thread.sleep(backoffSleepTimeSec * 1000);
-//                }
+                if(emptyScheduleBackoffCountDown == 0) {
+                    Thread.sleep(backoffSleepTimeSec * 1000);
+                }
             } catch (Exception e) {
                 logger.error("Error while executing schedules", e);
             }
