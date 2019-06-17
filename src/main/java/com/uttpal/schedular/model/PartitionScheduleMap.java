@@ -10,7 +10,7 @@ import java.util.List;
 @Getter
 @ToString
 public class PartitionScheduleMap {
-    PartitionOffset partitionOffset;
+    String partition;
     List<Schedule> schedules;
     public boolean isNotEmpty() {
         return !this.schedules.isEmpty();

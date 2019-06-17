@@ -9,17 +9,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Bean;
-import org.springframework.core.task.TaskExecutor;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 /**
@@ -33,7 +27,7 @@ public class ExecuteScheduleWorker implements CommandLineRunner {
     private SchedulerPartitionService schedulerPartitionService;
     private ScheduleService scheduleService;
     private int backoffThreshold = 5;
-    private long backoffSleepTimeSec = 10;
+    private long backoffSleepTimeSec = 2;
 
     @Autowired
     public ExecuteScheduleWorker(SchedulerPartitionService schedulerPartitionService, ScheduleService scheduleService) {
@@ -46,12 +40,12 @@ public class ExecuteScheduleWorker implements CommandLineRunner {
 
     @NoLogging
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         int emptyScheduleBackoffCountDown = backoffThreshold;
         while (true) {
             try {
                 List<String> partitions = schedulerPartitionService.getConsumerPartitionList();
-                List<PartitionScheduleMap> executions = partitions.stream()
+                List<PartitionScheduleMap> executions = partitions.parallelStream()
                         .map(scheduleService::excecutePartitionSchedule)
                         .map(this::getFromCompleteableFuture)
                         .flatMap(Collection::stream)

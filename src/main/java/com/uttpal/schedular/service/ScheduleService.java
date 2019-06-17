@@ -3,9 +3,7 @@ package com.uttpal.schedular.service;
 import com.google.gson.Gson;
 import com.uttpal.schedular.aspect.NoLogging;
 import com.uttpal.schedular.dao.ScheduleDao;
-import com.uttpal.schedular.dao.PartitionExecutionDao;
 import com.uttpal.schedular.exception.EntityAlreadyExists;
-import com.uttpal.schedular.exception.PartitionVersionMismatch;
 import com.uttpal.schedular.model.*;
 import com.uttpal.schedular.utils.DateTimeUtil;
 import io.micrometer.core.instrument.Clock;
@@ -34,11 +32,9 @@ import java.util.stream.Collectors;
 public class ScheduleService {
 
     private ScheduleDao scheduleDao;
-    private PartitionExecutionDao partitionExecutionDao;
     private KafkaProducerService kafkaProducerService;
     private DateTimeUtil dateTimeUtil;
     private long DELAY_THRESHOLD_SEC;
-    private long MISFIRE_THRESHOLD_SEC;
     private String createScheduleTopic;
     private Timer executiontimer;
     private Logger logger = LogManager.getLogger(ScheduleService.class);
@@ -48,18 +44,15 @@ public class ScheduleService {
 
 
     @Autowired
-    public ScheduleService(ScheduleDao scheduleDao, PartitionExecutionDao partitionExecutionDao,
+    public ScheduleService(ScheduleDao scheduleDao,
                            KafkaProducerService kafkaProducerService, DateTimeUtil dateTimeUtil,
                            @Value("${schedule.delay.threshold.sec}") long DELAY_THRESHOLD_SEC,
-                           @Value("${schedule.misfire.threshold.sec}") long MISFIRE_THRESHOLD_SEC,
                            @Value("${schedule.create.kafka.topicName}") String createScheduleTopic,
                            ElasticConfig elasticConfig) {
         this.scheduleDao = scheduleDao;
-        this.partitionExecutionDao = partitionExecutionDao;
         this.kafkaProducerService = kafkaProducerService;
         this.dateTimeUtil = dateTimeUtil;
         this.DELAY_THRESHOLD_SEC = DELAY_THRESHOLD_SEC;
-        this.MISFIRE_THRESHOLD_SEC = MISFIRE_THRESHOLD_SEC;
         this.createScheduleTopic = createScheduleTopic;
         MeterRegistry registry = new ElasticMeterRegistry(elasticConfig, Clock.SYSTEM);
 
@@ -85,23 +78,18 @@ public class ScheduleService {
             executeSchedules(new PartitionScheduleMap(null, Collections.singletonList(schedule)));
             return schedule;
         }
-        if(schedule.getScheduleTime() < (dateTimeUtil.getEpochMillis() + MISFIRE_THRESHOLD_SEC*1000)) {
-            partitionExecutionDao.updateVersion(schedule.getPartitionId());
-        }
         return scheduleDao.create(schedule);
     }
 
     @NoLogging
     public List<PartitionScheduleMap> executePartitions(List<String> partitions) {
         return partitions.stream()
-                .map(partitionExecutionDao::get)
-                .map(partitionOffset -> {
-                    List<Schedule> schedules = scheduleDao.scanSorted(partitionOffset.getPartitionId(), partitionOffset.getOffsetTimestamp(), dateTimeUtil.getEpochMillis(), 100);
-                    return new PartitionScheduleMap(partitionOffset, schedules);
+                .map(partition -> {
+                    List<Schedule> schedules = scheduleDao.scanSorted(partition, dateTimeUtil.getEpochMillis(), 25);
+                    return new PartitionScheduleMap(partition, schedules);
                 })
                 .filter(PartitionScheduleMap::isNotEmpty)
                 .map(this::executeSchedules)
-                .map(this::commitPartitionSchedule)
                 .collect(Collectors.toList());
     }
 
@@ -116,11 +104,15 @@ public class ScheduleService {
     }
 
     private PartitionScheduleMap executeSchedules(PartitionScheduleMap partitionScheduleMap) {
-        partitionScheduleMap.getSchedules()
+        List<Schedule> executedSchedules = partitionScheduleMap.getSchedules()
                 .stream()
                 .map(this::execute)
-                .map(schedule -> scheduleDao.createExecuted(schedule.completeSchedule(dateTimeUtil.getEpochMillis(), dateTimeUtil.getExecutedTtl())))
-                .forEach(schedule -> scheduleDao.deleteSchedule(schedule.getPartitionId(), schedule.getScheduleTime()));
+                .map(schedule -> schedule.completeSchedule(dateTimeUtil.getEpochMillis(), dateTimeUtil.getExecutedTtl()))
+                .collect(Collectors.toList());
+
+        scheduleDao.batchCreateExecuted(executedSchedules);
+        scheduleDao.batchDeleteSchedules(executedSchedules);
+
         return partitionScheduleMap;
     }
 
@@ -133,20 +125,5 @@ public class ScheduleService {
         executiontimer.record(dateTimeUtil.getEpochMillis() - schedule.getScheduleTime(), TimeUnit.MILLISECONDS);
         logger.info("Successfully executed schedule {} execution latency is {} ms", schedule, dateTimeUtil.getEpochMillis() - schedule.getScheduleTime());
         return schedule;
-    }
-
-    private PartitionScheduleMap commitPartitionSchedule(PartitionScheduleMap partitionScheduleMap) {
-        List<Schedule> schedules = partitionScheduleMap.getSchedules();
-        long updatedOffsetTime = schedules.get(schedules.size() - 1).getScheduleTime();
-
-        PartitionOffset partitionOffset = partitionScheduleMap.getPartitionOffset();
-
-        try {
-            partitionExecutionDao.update(partitionOffset.getPartitionId(), updatedOffsetTime, partitionOffset.getVersion());
-            logger.info("Successfully Commited batch {}", partitionScheduleMap);
-        } catch (PartitionVersionMismatch partitionVersionMismatch) {
-            logger.info("Failed Committing schedule offset batch will be retried {} {}" , partitionScheduleMap, partitionVersionMismatch);
-        }
-        return partitionScheduleMap;
     }
 }
