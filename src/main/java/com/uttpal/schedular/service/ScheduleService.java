@@ -3,7 +3,6 @@ package com.uttpal.schedular.service;
 import com.google.gson.Gson;
 import com.uttpal.schedular.aspect.NoLogging;
 import com.uttpal.schedular.dao.ScheduleDao;
-import com.uttpal.schedular.dao.PartitionExecutionDao;
 import com.uttpal.schedular.exception.EntityAlreadyExists;
 import com.uttpal.schedular.model.*;
 import com.uttpal.schedular.utils.DateTimeUtil;
@@ -33,11 +32,9 @@ import java.util.stream.Collectors;
 public class ScheduleService {
 
     private ScheduleDao scheduleDao;
-    private PartitionExecutionDao partitionExecutionDao;
     private KafkaProducerService kafkaProducerService;
     private DateTimeUtil dateTimeUtil;
     private long DELAY_THRESHOLD_SEC;
-    private long MISFIRE_THRESHOLD_SEC;
     private String createScheduleTopic;
     private Timer executiontimer;
     private Logger logger = LogManager.getLogger(ScheduleService.class);
@@ -47,18 +44,15 @@ public class ScheduleService {
 
 
     @Autowired
-    public ScheduleService(ScheduleDao scheduleDao, PartitionExecutionDao partitionExecutionDao,
+    public ScheduleService(ScheduleDao scheduleDao,
                            KafkaProducerService kafkaProducerService, DateTimeUtil dateTimeUtil,
                            @Value("${schedule.delay.threshold.sec}") long DELAY_THRESHOLD_SEC,
-                           @Value("${schedule.misfire.threshold.sec}") long MISFIRE_THRESHOLD_SEC,
                            @Value("${schedule.create.kafka.topicName}") String createScheduleTopic,
                            ElasticConfig elasticConfig) {
         this.scheduleDao = scheduleDao;
-        this.partitionExecutionDao = partitionExecutionDao;
         this.kafkaProducerService = kafkaProducerService;
         this.dateTimeUtil = dateTimeUtil;
         this.DELAY_THRESHOLD_SEC = DELAY_THRESHOLD_SEC;
-        this.MISFIRE_THRESHOLD_SEC = MISFIRE_THRESHOLD_SEC;
         this.createScheduleTopic = createScheduleTopic;
         MeterRegistry registry = new ElasticMeterRegistry(elasticConfig, Clock.SYSTEM);
 
@@ -84,9 +78,6 @@ public class ScheduleService {
             executeSchedules(new PartitionScheduleMap(null, Collections.singletonList(schedule)));
             return schedule;
         }
-//        if(schedule.getScheduleTime() < (dateTimeUtil.getEpochMillis() + MISFIRE_THRESHOLD_SEC*1000)) {
-//            partitionExecutionDao.updateVersion(schedule.getPartitionId());
-//        }
         return scheduleDao.create(schedule);
     }
 

@@ -150,11 +150,7 @@ public class ScheduleDaoDynamoImpl implements ScheduleDao {
         QueryRequest queryRequest = new QueryRequest()
                 .withTableName(scheduleTableName)
                 .withConsistentRead(true)
-<<<<<<< HEAD
                 .withKeyConditionExpression("#partitionId = :part AND #scheduleTime <= :currentTime")
-=======
-                .withKeyConditionExpression("#partitionId = :part AND #scheduleTime LE :currentTime")
->>>>>>> remove partition time sync
                 .withExpressionAttributeNames(new ImmutableMapParameter.Builder<String, String>()
                         .put("#partitionId", "partitionId")
                         .put("#scheduleTime", "scheduleTime")

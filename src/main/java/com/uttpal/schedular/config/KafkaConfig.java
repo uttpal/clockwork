@@ -7,14 +7,12 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.kafka.ConcurrentKafkaListenerContainerFactoryConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.ContainerProperties;
-import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.SeekToCurrentErrorHandler;
 
 import java.util.HashMap;
@@ -66,14 +64,14 @@ public class KafkaConfig {
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, offsetResetPolicy);
 
 
-        config.put("security.protocol", "SSL");
-        config.put("ssl.endpoint.identification.algorithm", "");
-        config.put("ssl.truststore.location", "client.truststore.jks");
-        config.put("ssl.truststore.password", "secret");
-        config.put("ssl.keystore.type", "PKCS12");
-        config.put("ssl.keystore.location", "client.keystore.p12");
-        config.put("ssl.keystore.password", "secret");
-        config.put("ssl.key.password", "secret");
+//        config.put("security.protocol", "SSL");
+//        config.put("ssl.endpoint.identification.algorithm", "");
+//        config.put("ssl.truststore.location", "client.truststore.jks");
+//        config.put("ssl.truststore.password", "secret");
+//        config.put("ssl.keystore.type", "PKCS12");
+//        config.put("ssl.keystore.location", "client.keystore.p12");
+//        config.put("ssl.keystore.password", "secret");
+//        config.put("ssl.key.password", "secret");
 
         return new DefaultKafkaConsumerFactory<>(config);
     }
@@ -93,14 +91,14 @@ public class KafkaConfig {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
 
-        props.put("security.protocol", "SSL");
-        props.put("ssl.endpoint.identification.algorithm", "");
-        props.put("ssl.truststore.location", "client.truststore.jks");
-        props.put("ssl.truststore.password", "secret");
-        props.put("ssl.keystore.type", "PKCS12");
-        props.put("ssl.keystore.location", "client.keystore.p12");
-        props.put("ssl.keystore.password", "secret");
-        props.put("ssl.key.password", "secret");
+//        props.put("security.protocol", "SSL");
+//        props.put("ssl.endpoint.identification.algorithm", "");
+//        props.put("ssl.truststore.location", "client.truststore.jks");
+//        props.put("ssl.truststore.password", "secret");
+//        props.put("ssl.keystore.type", "PKCS12");
+//        props.put("ssl.keystore.location", "client.keystore.p12");
+//        props.put("ssl.keystore.password", "secret");
+//        props.put("ssl.key.password", "secret");
 
 
         return props;

@@ -3,22 +3,15 @@ package com.uttpal.schedular.worker;
 import com.google.gson.Gson;
 import com.uttpal.schedular.exception.EntityAlreadyExists;
 import com.uttpal.schedular.model.CreateScheduleRequest;
-import com.uttpal.schedular.model.Delivery;
 import com.uttpal.schedular.model.Schedule;
 import com.uttpal.schedular.service.ScheduleService;
-import com.uttpal.schedular.service.SchedulerPartitionService;
 import com.uttpal.schedular.utils.DateTimeUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
-
-import java.time.Instant;
-import java.util.List;
 
 /**
  * @author Uttpal
