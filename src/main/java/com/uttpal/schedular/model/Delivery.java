@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import javax.validation.constraints.NotEmpty;
+
 /**
  * @author Uttpal
  */
@@ -13,6 +15,7 @@ import lombok.ToString;
 @Setter
 public class Delivery {
 
+    @NotEmpty
     private String topic;
     private String webHookUrl;
 

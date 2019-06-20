@@ -61,4 +61,8 @@ public class Schedule {
         updateSchedule.scheduleTime = scheduleTime;
         return updateSchedule;
     }
+
+    public static boolean isValid(Schedule schedule) {
+        return Objects.nonNull(schedule.getDelivery().getTopic()) && !schedule.getDelivery().getTopic().isEmpty();
+    }
 }

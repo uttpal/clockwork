@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
+
 
 /**
  * @author Uttpal
@@ -24,7 +26,7 @@ public class ScheduleController {
     }
 
     @PostMapping("")
-    public String create(@RequestBody CreateScheduleRequest createScheduleRequest) {
+    public String create(@Valid @RequestBody CreateScheduleRequest createScheduleRequest) {
         return scheduleService.schedule(createScheduleRequest);
     }
 }

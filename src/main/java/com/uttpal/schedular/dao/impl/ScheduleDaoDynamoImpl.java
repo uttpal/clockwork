@@ -100,6 +100,7 @@ public class ScheduleDaoDynamoImpl implements ScheduleDao {
     @Override
     public List<Schedule> batchCreateExecuted(List<Schedule> schedules) {
         List<WriteRequest> writeRequests = schedules.stream()
+                .filter(Schedule::isValid)
                 .map(this::getCreateExecutedRequest)
                 .collect(Collectors.toList());
 
