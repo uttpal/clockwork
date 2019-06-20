@@ -106,6 +106,7 @@ public class ScheduleService {
     private PartitionScheduleMap executeSchedules(PartitionScheduleMap partitionScheduleMap) {
         List<Schedule> executedSchedules = partitionScheduleMap.getSchedules()
                 .stream()
+                .filter(Schedule::isValid)
                 .map(this::execute)
                 .map(schedule -> schedule.completeSchedule(dateTimeUtil.getEpochMillis(), dateTimeUtil.getExecutedTtl()))
                 .collect(Collectors.toList());

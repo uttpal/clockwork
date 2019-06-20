@@ -17,11 +17,9 @@ public class Delivery {
 
     @NotEmpty
     private String topic;
-    private String webHookUrl;
 
-    public Delivery(String topic, String webHookUrl) {
+    public Delivery(String topic) {
         this.topic = topic;
-        this.webHookUrl = webHookUrl;
     }
 
     public Delivery() {
