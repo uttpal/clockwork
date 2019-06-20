@@ -118,7 +118,7 @@ public class ScheduleService {
 
     private Schedule execute(Schedule schedule) {
         Delivery delivery = schedule.getDelivery();
-        if(Objects.nonNull(delivery.getTopic())) {
+        if(Objects.nonNull(delivery.getTopic()) && !delivery.getTopic().isEmpty()) {
             kafkaProducerService.produce(schedule.getTaskData(), schedule.getOrderingKey(), delivery.getTopic());
         }
         //TODO:: add rest support

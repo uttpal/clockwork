@@ -35,6 +35,10 @@ public class CreateScheduleWorker {
 
         CreateScheduleRequest request = gson.fromJson(message, CreateScheduleRequest.class);
         try {
+            //TODO remove add request validation
+            if(request.getDelivery().getTopic().isEmpty()) {
+                return;
+            }
             scheduleService.create(Schedule.create(request.getClientId(), partition.toString(), request.getScheduleKey(), request.getOrderingKey(), request.getTaskData(), request.getDelivery(), request.getScheduleTime(), dateTimeUtil.getEpochMillis()));
         } catch (EntityAlreadyExists entityAlreadyExists) {
             logger.warn("Schedule Already Exists {}", request, entityAlreadyExists);
