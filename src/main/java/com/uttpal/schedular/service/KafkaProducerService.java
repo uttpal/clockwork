@@ -13,6 +13,7 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.concurrent.ListenableFuture;
 
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +24,7 @@ import java.util.concurrent.TimeoutException;
  */
 @Service
 public class KafkaProducerService {
+    private Logger logger = LogManager.getLogger(KafkaProducerService.class);
 
     private KafkaTemplate<String, String> kafkaTemplate;
 
@@ -34,6 +36,10 @@ public class KafkaProducerService {
 
     @Retryable
     public String produce(String payload, String partitionKey, String topic) {
+        if(Objects.isNull(topic) || topic.isEmpty()) {
+            logger.warn("Empty topic proviced {} partition {} payload {}", topic, partitionKey, payload);
+            return partitionKey;
+        }
         ListenableFuture<SendResult<String, String>> future = kafkaTemplate.send(topic, partitionKey, payload);
         try {
             //TODO: add timeout to config
