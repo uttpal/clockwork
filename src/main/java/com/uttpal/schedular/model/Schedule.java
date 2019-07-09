@@ -1,6 +1,7 @@
 package com.uttpal.schedular.model;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -12,9 +13,12 @@ import java.util.Objects;
  */
 @ToString
 @Getter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Schedule {
     String clientId;
     String partitionId;
+
+    @EqualsAndHashCode.Include
     String scheduleKey;
     String orderingKey;
     String taskData;
