@@ -185,7 +185,6 @@ public class ScheduleDaoDynamoImpl implements ScheduleDao {
     public Optional<Schedule> getByScheduleKey(String scheduleKey) {
         QueryRequest queryRequest = new QueryRequest()
                 .withTableName(scheduleTableName)
-                .withConsistentRead(true)
                 .withIndexName(scheduleKeyIndexName)
                 .withKeyConditionExpression("#scheduleKey = :scheduleKey")
                 .withExpressionAttributeNames(new ImmutableMapParameter.Builder<String, String>()
