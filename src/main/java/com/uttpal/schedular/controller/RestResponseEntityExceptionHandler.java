@@ -25,7 +25,7 @@ public class RestResponseEntityExceptionHandler
             = { RuntimeException.class})
     protected ResponseEntity<Object> handleUnknownException (
             RuntimeException ex, WebRequest request) {
-        String bodyOfResponse = "Illegal argument provided";
+        String bodyOfResponse = "Unknown exception";
         return handleExceptionInternal(ex, bodyOfResponse,
                 new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
     }
