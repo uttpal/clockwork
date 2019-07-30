@@ -31,6 +31,8 @@ public class ScheduleDaoDynamoImpl implements ScheduleDao {
     private String executedScheduleTableName;
     private String partitionKey = "partitionId";
     private String sortKey = "scheduleTime";
+    private String scheduleKeyIndexName = "scheduleKey-index";
+    private String scheduleKeyName = "scheduleKey";
     private Gson gson = new Gson();
     private Logger logger = LogManager.getLogger(ScheduleDaoDynamoImpl.class);
 
@@ -100,6 +102,7 @@ public class ScheduleDaoDynamoImpl implements ScheduleDao {
     @Override
     public List<Schedule> batchCreateExecuted(List<Schedule> schedules) {
         List<WriteRequest> writeRequests = schedules.stream()
+                .distinct()
                 .map(this::getCreateExecutedRequest)
                 .collect(Collectors.toList());
 
@@ -176,5 +179,26 @@ public class ScheduleDaoDynamoImpl implements ScheduleDao {
 
     private Schedule addRandomDelayToSchedule(Schedule schedule) {
         return schedule.updateScheduleTime(schedule.getScheduleTime() + new Random().ints(1, 1, 10000).findFirst().getAsInt());
+    }
+
+    @Override
+    public Optional<Schedule> getByScheduleKey(String scheduleKey) {
+        QueryRequest queryRequest = new QueryRequest()
+                .withTableName(scheduleTableName)
+                .withIndexName(scheduleKeyIndexName)
+                .withKeyConditionExpression("#scheduleKey = :scheduleKey")
+                .withExpressionAttributeNames(new ImmutableMapParameter.Builder<String, String>()
+                        .put("#scheduleKey", "scheduleKey")
+                        .build()
+                )
+                .withExpressionAttributeValues(new ImmutableMapParameter.Builder<String, AttributeValue>()
+                        .put(":scheduleKey", new AttributeValue(scheduleKey))
+                        .build()
+                );
+
+        List<Map<String, AttributeValue>> schdeuleMaps = dynamoDB.query(queryRequest).getItems();
+        return schdeuleMaps.stream()
+                .map(this::attributeMapToSchedule)
+                .findFirst();
     }
 }

@@ -1,12 +1,10 @@
 package com.uttpal.schedular.controller;
 
+import com.uttpal.schedular.model.CancelScheduleRequest;
 import com.uttpal.schedular.model.CreateScheduleRequest;
 import com.uttpal.schedular.service.ScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
@@ -28,5 +26,11 @@ public class ScheduleController {
     @PostMapping("")
     public String create(@Valid @RequestBody CreateScheduleRequest createScheduleRequest) {
         return scheduleService.schedule(createScheduleRequest);
+    }
+
+
+    @DeleteMapping("")
+    public String cancel(@Valid @RequestBody CancelScheduleRequest cancelScheduleRequest) {
+        return scheduleService.cancel(cancelScheduleRequest.getClientId(), cancelScheduleRequest.getScheduleKey());
     }
 }

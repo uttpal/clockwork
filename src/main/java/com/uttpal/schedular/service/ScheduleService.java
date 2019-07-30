@@ -18,9 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -126,5 +124,16 @@ public class ScheduleService {
         executiontimer.record(dateTimeUtil.getEpochMillis() - schedule.getScheduleTime(), TimeUnit.MILLISECONDS);
         logger.info("Successfully executed schedule {} execution latency is {} ms", schedule, dateTimeUtil.getEpochMillis() - schedule.getScheduleTime());
         return schedule;
+    }
+
+    public String cancel(String clientId, String scheduleKey) {
+        Optional<Schedule> scheduleOpt = scheduleDao.getByScheduleKey(Schedule.generateScheduleKey(clientId, scheduleKey));
+        Schedule schedule = scheduleOpt.orElseThrow(IllegalArgumentException::new);
+
+        Schedule cancelledSchedule = schedule.cancelSchedule(dateTimeUtil.getExecutedTtl());
+
+        scheduleDao.batchCreateExecuted(Collections.singletonList(cancelledSchedule));
+        scheduleDao.batchDeleteSchedules(Collections.singletonList(schedule));
+        return scheduleKey;
     }
 }

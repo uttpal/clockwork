@@ -1,6 +1,7 @@
 package com.uttpal.schedular.model;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -12,9 +13,12 @@ import java.util.Objects;
  */
 @ToString
 @Getter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Schedule {
     String clientId;
     String partitionId;
+
+    @EqualsAndHashCode.Include
     String scheduleKey;
     String orderingKey;
     String taskData;
@@ -40,7 +44,7 @@ public class Schedule {
         this.version = version;
     }
     public static Schedule create(String clientId, String partitionId, String scheduleKey, String orderingKey, String taskData, Delivery delivery, long scheduleTime, long enqueTime) {
-        return new Schedule(clientId, partitionId, clientId + "-" +scheduleKey, orderingKey, taskData, delivery, ScheduleStatus.PENDING, scheduleTime, 0, enqueTime, 1);
+        return new Schedule(clientId, partitionId, generateScheduleKey(clientId, scheduleKey), orderingKey, taskData, delivery, ScheduleStatus.PENDING, scheduleTime, 0, enqueTime, 1);
     }
 
     private Schedule copy() {
@@ -55,6 +59,13 @@ public class Schedule {
         return updateSchedule;
     }
 
+    public Schedule cancelSchedule(long ttl) {
+        Schedule updateSchedule = copy();
+        updateSchedule.status = ScheduleStatus.CANCELLED;
+        updateSchedule.ttl = ttl;
+        return updateSchedule;
+    }
+
     public Schedule updateScheduleTime(long scheduleTime) {
         Schedule updateSchedule = copy();
 
@@ -64,5 +75,9 @@ public class Schedule {
 
     public static boolean isValid(Schedule schedule) {
         return Objects.nonNull(schedule.getDelivery().getTopic()) && !schedule.getDelivery().getTopic().isEmpty();
+    }
+
+    public static String generateScheduleKey(String clientId, String scheduleKey) {
+        return clientId + "-" + scheduleKey;
     }
 }
