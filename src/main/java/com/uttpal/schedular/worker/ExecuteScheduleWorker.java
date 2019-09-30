@@ -8,6 +8,7 @@ import lombok.SneakyThrows;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -24,15 +25,16 @@ public class ExecuteScheduleWorker implements CommandLineRunner {
 
     private Logger logger = LogManager.getLogger(ExecuteScheduleWorker.class);
 
-    private SchedulerPartitionService schedulerPartitionService;
-    private ScheduleService scheduleService;
-    private int backoffThreshold = 5;
-    private long backoffSleepTimeSec = 2;
+    private final SchedulerPartitionService schedulerPartitionService;
+    private final ScheduleService scheduleService;
+    private final int backoffThreshold = 5;
+    private final Integer backoffSleepTimeSec;
 
     @Autowired
-    public ExecuteScheduleWorker(SchedulerPartitionService schedulerPartitionService, ScheduleService scheduleService) {
+    public ExecuteScheduleWorker(SchedulerPartitionService schedulerPartitionService, ScheduleService scheduleService, @Value("${backoffsleeptime.sec}") Integer backoffSleepTimeSec) {
         this.schedulerPartitionService = schedulerPartitionService;
         this.scheduleService = scheduleService;
+        this.backoffSleepTimeSec = backoffSleepTimeSec;
     }
 
 

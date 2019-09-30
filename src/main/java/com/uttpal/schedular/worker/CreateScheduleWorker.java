@@ -35,7 +35,6 @@ public class CreateScheduleWorker {
 
         CreateScheduleRequest request = gson.fromJson(message, CreateScheduleRequest.class);
         try {
-            //TODO remove add request validation
             if(request.getDelivery().getTopic().isEmpty()) {
                 return;
             }

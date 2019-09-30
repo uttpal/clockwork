@@ -25,23 +25,25 @@ import java.util.Map;
 @Configuration
 public class KafkaConfig {
 
-    private KafkaRebalanceListener kafkaRebalanceListener;
-    private String bootstrapServers;
-    private String consumerGroup;
-    private String offsetResetPolicy;
+    private final KafkaRebalanceListener kafkaRebalanceListener;
+    private final String bootstrapServers;
+    private final String consumerGroup;
+    private final String offsetResetPolicy;
+    private final Integer concurrency;
 
 
     @Autowired
-    public KafkaConfig(KafkaRebalanceListener kafkaRebalanceListener,@Value("${kafka.bootstrap.servers}") String bootstrapServers, @Value("${kafka.consumer.group-id}") String consumerGroup, @Value("${kafka.consumer.auto-offset-reset}") String offsetResetPolicy) {
+    public KafkaConfig(KafkaRebalanceListener kafkaRebalanceListener,@Value("${kafka.bootstrap.servers}") String bootstrapServers, @Value("${kafka.consumer.group-id}") String consumerGroup, @Value("${kafka.consumer.auto-offset-reset}") String offsetResetPolicy, @Value("${kafka.consumer.concurrency}") Integer concurrency) {
         this.kafkaRebalanceListener = kafkaRebalanceListener;
         this.bootstrapServers = bootstrapServers;
         this.consumerGroup = consumerGroup;
         this.offsetResetPolicy = offsetResetPolicy;
+        this.concurrency = concurrency;
     }
 
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory(KafkaTemplate<String, String> template) {
+    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory();
         factory.setConsumerFactory(consumerFactory());
         factory.getContainerProperties().setPollTimeout(3000);
@@ -49,8 +51,7 @@ public class KafkaConfig {
         factory.setErrorHandler(new SeekToCurrentErrorHandler());
         factory.getContainerProperties().setConsumerRebalanceListener(kafkaRebalanceListener);
         factory.getContainerProperties().setAckOnError(false);
-        //TODO: enable concurrency
-        factory.setConcurrency(3);
+        factory.setConcurrency(concurrency);
         return factory;
     }
 
