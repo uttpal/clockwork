@@ -1,5 +1,5 @@
 # Clockwork-Scheduler
-Clockwork-Schedular is a general purpose distributed job scheduler. It offers you horizontally scalable scheduler with
+Clockwork-Scheduler is a general purpose distributed job scheduler. It offers you horizontally scalable scheduler with
 atleast once delivery guarantees. Currently supported task delivery mechanism is kafka, at task execution time the schedule 
 data is pushed to the given kafka topic.
 
