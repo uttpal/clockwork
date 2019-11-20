@@ -6,6 +6,9 @@ data is pushed to the given kafka topic.
 It uses kafka for task buffering ordering, shard calculation and delivery. Currently DynamoDB 
 is the only supported database.
 
+## Architecture
+### Find more on blog [here](https://cynic.dev/posts/clockwork-scalable-job-scheduler/)
+![architecture](https://cynic.dev/clockwork/Clockwork-aa135eaf-d958-42d7-a0f1-9db6031cff8c.jpg)
 ## Getting Started
 ### Prerequisites
 ```java
